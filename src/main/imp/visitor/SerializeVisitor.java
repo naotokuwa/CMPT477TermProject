@@ -1,85 +1,81 @@
-package imp;
+package imp.visitor;
+
+import imp.*;
+import imp.condition.BinaryCondition;
+import imp.condition.ConditionType;
+import imp.condition.Boolean;
+import imp.expression.BinaryExpression;
+import imp.expression.ExpressionType;
+import imp.expression.IntegerExpression;
+import imp.expression.VariableExpression;
+import imp.statement.Assignment;
+import imp.statement.Composition;
+import imp.statement.If;
+
+import java.util.Map;
 
 public final class SerializeVisitor extends GrammarVisitor {
     public String result;
-    public int depth = 0;
-    public final int INDENT = 2;
+    private int depth = 0;
+    private final int INDENT = 2;
 
     private String addIndent(String s) {
         return " ".repeat(depth * INDENT) + s;
     }
 
     @Override
-    void visit(Grammar grammar) {
+    public void visit(Grammar grammar) {
         throw new UnsupportedOperationException("This should not be called");
     }
 
     @Override
-    void visit(IntegerExpression e) {
+    public void visit(IntegerExpression e) {
         result = String.valueOf(e.integer);
     }
 
     @Override
-    void visit(VariableExpression e) {
+    public void visit(VariableExpression e) {
         result = e.symbol;
     }
 
     @Override
-    void visit(AdditionExpression e) {
+    public void visit(BinaryExpression e) {
+        Map<ExpressionType, String> typeToString = Map.of(
+                ExpressionType.ADD, "+",
+                ExpressionType.MUL, "*"
+        );
         e.left.accept(this);
         String left = result;
 
         e.right.accept(this);
         String right = result;
 
-        result = left + " + " + right;
+        result = left + " " + typeToString.get(e.type) + " " + right;
     }
 
     @Override
-    void visit(MultiplyExpression e) {
-        e.left.accept(this);
-        String left = result;
-
-        e.right.accept(this);
-        String right = result;
-
-        result = left + " * " + right;
+    public void visit(Boolean c) {
+        result = String.valueOf(c.value);
     }
 
     @Override
-    void visit(True t) {
-        result = "true";
-    }
+    public void visit(BinaryCondition c) {
+        Map<ConditionType, String> typeToString = Map.of(
+                ConditionType.EQUAL, "==",
+                ConditionType.LE, "<="
+        );
 
-    @Override
-    void visit(False t) {
-        result = "false";
-    }
-
-    @Override
-    void visit(Equal c) {
         c.left.accept(this);
         String left = result;
 
         c.right.accept(this);
         String right = result;
 
-        result = left + " == " + right;
+        result = left + " " + typeToString.get(c.type) + " " + right;
     }
 
     @Override
-    void visit(Le c) {
-        c.left.accept(this);
-        String left = result;
-
-        c.right.accept(this);
-        String right = result;
-
-        result = left + " <= " + right;
-    }
-
-    @Override
-    void visit(Assignment s) {
+    public void visit(Assignment s) {
         s.v.accept(this);
         String left = result;
 
@@ -90,7 +86,7 @@ public final class SerializeVisitor extends GrammarVisitor {
     }
 
     @Override
-    void visit(Composition s) {
+    public void visit(Composition s) {
         s.before.accept(this);
         String before = result;
 
@@ -101,7 +97,7 @@ public final class SerializeVisitor extends GrammarVisitor {
     }
 
     @Override
-    void visit(If s) {
+    public void visit(If s) {
         s.c.accept(this);
         String c = result;
 

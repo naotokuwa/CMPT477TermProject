@@ -1,5 +1,7 @@
 package imp;
 
-abstract public class Grammar {
+import imp.visitor.GrammarVisitor;
+
+public abstract class Grammar {
     abstract public void accept(GrammarVisitor visitor);
 }

@@ -1,5 +1,10 @@
 package imp;
 
+import imp.condition.*;
+import imp.condition.Boolean;
+import imp.expression.*;
+import imp.statement.*;
+import imp.visitor.SerializeVisitor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -8,7 +13,8 @@ public class SerializeVisitorTest {
     @Test
     public void testAdditionPrint() {
         SerializeVisitor visitor = new SerializeVisitor();
-        Expression addition = new AdditionExpression(new IntegerExpression(1), new IntegerExpression(1));
+        Expression one = new IntegerExpression(1);
+        Expression addition = new BinaryExpression(ExpressionType.ADD, one, one);
 
         // Perform serialization
         addition.accept(visitor);
@@ -22,10 +28,12 @@ public class SerializeVisitorTest {
     @Test
     public void testMultiplyPrint() {
         SerializeVisitor visitor = new SerializeVisitor();
-        Expression addition = new MultiplyExpression(new VariableExpression("x"), new VariableExpression("y"));
+        Expression x = new VariableExpression("x");
+        Expression y = new VariableExpression("y");
+        Expression multiply = new BinaryExpression(ExpressionType.MUL, x, y);
 
         // Perform serialization
-        addition.accept(visitor);
+        multiply.accept(visitor);
 
         String result = visitor.result;
         String expected = "x * y";
@@ -36,7 +44,7 @@ public class SerializeVisitorTest {
     @Test
     public void testTrue() {
         SerializeVisitor visitor = new SerializeVisitor();
-        Conditional c = new True();
+        Conditional c = new Boolean(true);
 
         // Perform serialization
         c.accept(visitor);
@@ -49,7 +57,7 @@ public class SerializeVisitorTest {
     @Test
     public void testFalse() {
         SerializeVisitor visitor = new SerializeVisitor();
-        Conditional c = new False();
+        Conditional c = new Boolean(false);
 
         // Perform serialization
         c.accept(visitor);
@@ -62,7 +70,9 @@ public class SerializeVisitorTest {
     @Test
     public void testEqual() {
         SerializeVisitor visitor = new SerializeVisitor();
-        Conditional c = new Equal(new VariableExpression("x"), new IntegerExpression((1)));
+        Expression x = new VariableExpression("x");
+        Expression one = new IntegerExpression(1);
+        Conditional c = new BinaryCondition(ConditionType.EQUAL, x, one);
 
         // Perform serialization
         c.accept(visitor);
@@ -75,7 +85,9 @@ public class SerializeVisitorTest {
     @Test
     public void testLe() {
         SerializeVisitor visitor = new SerializeVisitor();
-        Conditional c = new Le(new VariableExpression("x"), new IntegerExpression((5)));
+        Expression x = new VariableExpression("x");
+        Expression five = new IntegerExpression(5);
+        Conditional c = new BinaryCondition(ConditionType.LE, x, five);
 
         // Perform serialization
         c.accept(visitor);
@@ -107,7 +119,7 @@ public class SerializeVisitorTest {
 
         Statement s1 = new Assignment(x, new IntegerExpression((5)));
         Statement s2 = new Assignment(y, new IntegerExpression((2)));
-        AdditionExpression additionExpression = new AdditionExpression(x, y);
+        Expression additionExpression = new BinaryExpression(ExpressionType.ADD, x, y);
         Statement s3 = new Assignment(z, additionExpression);
 
         Statement s = new Composition(s1, new Composition(s2, s3));
@@ -136,7 +148,7 @@ public class SerializeVisitorTest {
         Statement s2 = new Assignment(y, new IntegerExpression((100)));
 
         // If block
-        Conditional c = new Le(x, y);
+        Conditional c = new BinaryCondition(ConditionType.LE, x, y);
         Statement s3 = new Assignment(minVar, x);
         Statement s4 = new Assignment(minVar, y);
         Statement s5 = new If(c, s3, s4);
@@ -172,19 +184,19 @@ public class SerializeVisitorTest {
         VariableExpression y = new VariableExpression("y");
 
         // First nested if
-        Conditional c1 = new Equal(y, zero);
+        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, y, zero);
         Statement s1 = new Assignment(result, one);
         Statement s2 = new Assignment(result, negativeOne);
         Statement s3 = new If(c1, s1, s2);
 
         // Second nested if
-        Conditional c2 = new Equal(y, zero);
+        Conditional c2 = new BinaryCondition(ConditionType.EQUAL, y, zero);
         Statement s4 = new Assignment(result, negativeOne);
         Statement s5 = new Assignment(result, one);
         Statement s6 = new If(c2, s4, s5);
 
         // Outer if statement
-        Conditional c3 = new Equal(x, zero);
+        Conditional c3 = new BinaryCondition(ConditionType.EQUAL, x, zero);
         Statement s = new If(c3, s3, s6);
 
         // Perform serialization
