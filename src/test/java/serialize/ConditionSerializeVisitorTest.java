@@ -1,10 +1,11 @@
-package imp.visitor.serialize;
+package serialize;
 
 import imp.condition.*;
 import imp.condition.Boolean;
 import imp.expression.Expression;
 import imp.expression.IntegerExpression;
 import imp.expression.VariableExpression;
+import imp.visitor.serialize.ConditionSerializeVisitor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
