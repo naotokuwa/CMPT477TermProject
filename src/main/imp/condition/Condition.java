@@ -2,6 +2,6 @@ package imp.condition;
 
 import imp.visitor.ConditionVisitor;
 
-public abstract class Conditional {
+public abstract class Condition {
     public abstract void accept(ConditionVisitor visitor);
 }

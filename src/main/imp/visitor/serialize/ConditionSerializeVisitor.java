@@ -1,8 +1,7 @@
 package imp.visitor.serialize;
 
-import imp.condition.BinaryCondition;
+import imp.condition.*;
 import imp.condition.Boolean;
-import imp.condition.ConditionType;
 import imp.visitor.ConditionVisitor;
 
 import java.util.Map;
@@ -31,5 +30,30 @@ final public class ConditionSerializeVisitor extends ConditionVisitor {
         String right = expressionSerializeVisitor.result;
 
         result = left + " " + typeToString.get(c.type) + " " + right;
+    }
+
+    @Override
+    public void visit(BinaryConnective c) {
+        Map<ConnectiveType, String> typeToString = Map.of(
+                ConnectiveType.OR, "OR",
+                ConnectiveType.AND, "AND",
+                ConnectiveType.IMPLIES, "==>"
+        );
+        c.left.accept(this);
+        String left = result;
+
+        c.right.accept(this);
+        String right = result;
+
+        result = "( "+ left + " ) " + typeToString.get(c.type) + " ( " + right + " )";
+    }
+
+    @Override
+    public void visit(UnaryConnective c) {
+        Map<ConnectiveType, String> typeToString = Map.of(
+                ConnectiveType.NOT, "NOT"
+        );
+        c.condition.accept(this);
+        result = typeToString.get(c.type) + "( " + result + " )";
     }
 }

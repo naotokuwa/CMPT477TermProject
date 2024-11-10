@@ -2,8 +2,8 @@ package imp.condition;
 
 import imp.visitor.ConditionVisitor;
 
-public final class Boolean extends Conditional {
-    public boolean value;
+public final class Boolean extends Condition {
+    public final boolean value;
 
     public Boolean(boolean value) {
         this.value = value;
