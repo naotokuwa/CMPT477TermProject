@@ -1,9 +1,7 @@
 package imp.visitor.serialize;
 
-import imp.condition.BinaryCondition;
+import imp.condition.*;
 import imp.condition.Boolean;
-import imp.condition.ConditionType;
-import imp.condition.Conditional;
 import imp.expression.Expression;
 import imp.expression.IntegerExpression;
 import imp.expression.VariableExpression;
@@ -64,6 +62,125 @@ public class ConditionSerializeVisitorTest {
         c.accept(visitor);
         String result = visitor.result;
         String expected = "x <= 5";
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testAnd() {
+        ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
+
+        // 1 <= x
+        Expression x = new VariableExpression("x");
+        Expression one = new IntegerExpression(1);
+        Conditional c1 = new BinaryCondition(ConditionType.LE, one, x);
+
+        // x <= 5
+        Expression five = new IntegerExpression(5);
+        Conditional c2 = new BinaryCondition(ConditionType.LE, x, five);
+
+        Conditional c = new BinaryConnective(ConnectiveType.AND, c1, c2);
+
+        // Perform serialization
+        c.accept(visitor);
+        String result = visitor.result;
+        String expected = "( 1 <= x ) AND ( x <= 5 )";
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testOr() {
+        ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
+
+        // x == 1
+        Expression x = new VariableExpression("x");
+        Expression one = new IntegerExpression(1);
+        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, one);
+
+        // x == -1
+        Expression negativeOne = new IntegerExpression(-1);
+        Conditional c2 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
+
+        Conditional c = new BinaryConnective(ConnectiveType.OR, c1, c2);
+
+        // Perform serialization
+        c.accept(visitor);
+        String result = visitor.result;
+        String expected = "( x == 1 ) OR ( x == -1 )";
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testImplies() {
+        ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
+
+        // (x == -1)
+        Expression x = new VariableExpression("x");
+        Expression negativeOne = new IntegerExpression(-1);
+        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
+
+        // (x <= 0)
+        Expression zero = new IntegerExpression(0);
+        Conditional c2 = new BinaryCondition(ConditionType.LE, x, zero);
+
+        Conditional c = new BinaryConnective(ConnectiveType.IMPLIES, c1, c2);
+
+        // Perform serialization
+        c.accept(visitor);
+        String result = visitor.result;
+        String expected = "( x == -1 ) ==> ( x <= 0 )";
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testNot() {
+        ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
+
+        // NOT (x == 1)
+        Expression x = new VariableExpression("x");
+        Expression one = new IntegerExpression(1);
+        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, one);
+
+        Conditional c = new UnaryConnective(ConnectiveType.NOT, c1);
+
+        // Perform serialization
+        c.accept(visitor);
+        String result = visitor.result;
+        String expected = "NOT( x == 1 )";
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testNestedConnective() {
+        ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
+
+        Expression x = new VariableExpression("x");
+
+        // (x == -1)
+        Expression negativeOne = new IntegerExpression(-1);
+        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
+
+        // x <= 0
+        Expression zero = new IntegerExpression(0);
+        Conditional c2 = new BinaryCondition(ConditionType.LE, x, zero);
+
+        Conditional firstImply = new BinaryConnective(ConnectiveType.IMPLIES, c1, c2);
+
+        // Second Imply
+        Conditional notC1 = new UnaryConnective(ConnectiveType.NOT, c1);
+        Conditional notC2 = new UnaryConnective(ConnectiveType.NOT, c2);
+        Conditional secondImply = new BinaryConnective(ConnectiveType.IMPLIES, notC1, notC2);
+
+        Conditional c = new BinaryConnective(ConnectiveType.AND, firstImply, secondImply);
+
+        // Perform serialization
+        c.accept(visitor);
+        String result = visitor.result;
+        String expected = "( ( x == -1 ) ==> ( x <= 0 ) ) AND ( ( NOT( x == -1 ) ) ==> ( NOT( x <= 0 ) ) )";
 
         assertEquals(expected, result);
     }
