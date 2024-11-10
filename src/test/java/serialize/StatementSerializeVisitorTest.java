@@ -1,4 +1,4 @@
-package imp.visitor.serialize;
+package serialize;
 
 import imp.condition.BinaryCondition;
 import imp.condition.ConditionType;
@@ -8,6 +8,7 @@ import imp.statement.Assignment;
 import imp.statement.Composition;
 import imp.statement.If;
 import imp.statement.Statement;
+import imp.visitor.serialize.StatementSerializeVisitor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,6 +1,7 @@
-package imp.visitor.serialize;
+package serialize;
 
 import imp.expression.*;
+import imp.visitor.serialize.ExpressionSerializeVisitor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
