@@ -1,105 +1,21 @@
-package imp;
+package imp.visitor.serialize;
 
-import imp.condition.*;
-import imp.condition.Boolean;
+import imp.condition.BinaryCondition;
+import imp.condition.ConditionType;
+import imp.condition.Conditional;
 import imp.expression.*;
-import imp.statement.*;
-import imp.visitor.SerializeVisitor;
+import imp.statement.Assignment;
+import imp.statement.Composition;
+import imp.statement.If;
+import imp.statement.Statement;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SerializeVisitorTest {
-    @Test
-    public void testAdditionPrint() {
-        SerializeVisitor visitor = new SerializeVisitor();
-        Expression one = new IntegerExpression(1);
-        Expression addition = new BinaryExpression(ExpressionType.ADD, one, one);
-
-        // Perform serialization
-        addition.accept(visitor);
-
-        String result = visitor.result;
-        String expected = "1 + 1";
-
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testMultiplyPrint() {
-        SerializeVisitor visitor = new SerializeVisitor();
-        Expression x = new VariableExpression("x");
-        Expression y = new VariableExpression("y");
-        Expression multiply = new BinaryExpression(ExpressionType.MUL, x, y);
-
-        // Perform serialization
-        multiply.accept(visitor);
-
-        String result = visitor.result;
-        String expected = "x * y";
-
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testTrue() {
-        SerializeVisitor visitor = new SerializeVisitor();
-        Conditional c = new Boolean(true);
-
-        // Perform serialization
-        c.accept(visitor);
-        String result = visitor.result;
-        String expected = "true";
-
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testFalse() {
-        SerializeVisitor visitor = new SerializeVisitor();
-        Conditional c = new Boolean(false);
-
-        // Perform serialization
-        c.accept(visitor);
-        String result = visitor.result;
-        String expected = "false";
-
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testEqual() {
-        SerializeVisitor visitor = new SerializeVisitor();
-        Expression x = new VariableExpression("x");
-        Expression one = new IntegerExpression(1);
-        Conditional c = new BinaryCondition(ConditionType.EQUAL, x, one);
-
-        // Perform serialization
-        c.accept(visitor);
-        String result = visitor.result;
-        String expected = "x == 1";
-
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testLe() {
-        SerializeVisitor visitor = new SerializeVisitor();
-        Expression x = new VariableExpression("x");
-        Expression five = new IntegerExpression(5);
-        Conditional c = new BinaryCondition(ConditionType.LE, x, five);
-
-        // Perform serialization
-        c.accept(visitor);
-        String result = visitor.result;
-        String expected = "x <= 5";
-
-        assertEquals(expected, result);
-    }
-
+public class StatementSerializeVisitorTest {
     @Test
     public void testAssignment() {
-        SerializeVisitor visitor = new SerializeVisitor();
+        StatementSerializeVisitor visitor = new StatementSerializeVisitor();
         Statement s = new Assignment(new VariableExpression("x"), new IntegerExpression((5)));
 
         // Perform serialization
@@ -112,7 +28,7 @@ public class SerializeVisitorTest {
 
     @Test
     public void testComposition() {
-        SerializeVisitor visitor = new SerializeVisitor();
+        StatementSerializeVisitor visitor = new StatementSerializeVisitor();
         VariableExpression x = new VariableExpression("x");
         VariableExpression y = new VariableExpression("y");
         VariableExpression z = new VariableExpression("z");
@@ -136,7 +52,7 @@ public class SerializeVisitorTest {
 
     @Test
     public void testIf() {
-        SerializeVisitor visitor = new SerializeVisitor();
+        StatementSerializeVisitor visitor = new StatementSerializeVisitor();
 
         // Variable initialization
         VariableExpression minVar = new VariableExpression("minVar");
@@ -171,7 +87,7 @@ public class SerializeVisitorTest {
 
     @Test
     public void testNestedIf() {
-        SerializeVisitor visitor = new SerializeVisitor();
+        StatementSerializeVisitor visitor = new StatementSerializeVisitor();
 
         // Const
         IntegerExpression zero = new IntegerExpression(0);

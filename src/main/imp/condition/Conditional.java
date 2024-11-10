@@ -1,5 +1,7 @@
 package imp.condition;
 
-import imp.Grammar;
+import imp.visitor.ConditionVisitor;
 
-public abstract class Conditional extends Grammar {}
+public abstract class Conditional {
+    public abstract void accept(ConditionVisitor visitor);
+}

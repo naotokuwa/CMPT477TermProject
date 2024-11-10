@@ -1,7 +1,7 @@
 package imp.condition;
 
 import imp.expression.Expression;
-import imp.visitor.GrammarVisitor;
+import imp.visitor.ConditionVisitor;
 
 public final class BinaryCondition extends Conditional {
     public final ConditionType type;
@@ -15,7 +15,7 @@ public final class BinaryCondition extends Conditional {
     }
 
     @Override
-    public void accept(GrammarVisitor visitor) {
+    public void accept(ConditionVisitor visitor) {
         visitor.visit(this);
     }
 }

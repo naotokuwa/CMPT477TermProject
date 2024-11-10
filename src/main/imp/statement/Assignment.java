@@ -2,7 +2,7 @@ package imp.statement;
 
 import imp.expression.Expression;
 import imp.expression.VariableExpression;
-import imp.visitor.GrammarVisitor;
+import imp.visitor.StatementVisitor;
 
 public final class Assignment extends Statement {
     public final VariableExpression v;
@@ -14,7 +14,7 @@ public final class Assignment extends Statement {
     }
 
     @Override
-    public void accept(GrammarVisitor visitor) {
+    public void accept(StatementVisitor visitor) {
         visitor.visit(this);
     }
 }

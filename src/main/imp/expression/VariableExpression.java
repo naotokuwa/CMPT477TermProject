@@ -1,6 +1,6 @@
 package imp.expression;
 
-import imp.visitor.GrammarVisitor;
+import imp.visitor.ExpressionVisitor;
 
 public final class VariableExpression extends Expression {
     public final String symbol;
@@ -10,7 +10,7 @@ public final class VariableExpression extends Expression {
     }
 
     @Override
-    public void accept(GrammarVisitor visitor) {
+    public void accept(ExpressionVisitor visitor) {
         visitor.visit(this);
     }
 }

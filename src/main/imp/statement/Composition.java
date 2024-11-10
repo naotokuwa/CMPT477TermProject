@@ -1,6 +1,6 @@
 package imp.statement;
 
-import imp.visitor.GrammarVisitor;
+import imp.visitor.StatementVisitor;
 
 public final class Composition extends Statement {
     public final Statement before;
@@ -12,7 +12,7 @@ public final class Composition extends Statement {
     }
 
     @Override
-    public void accept(GrammarVisitor visitor) {
+    public void accept(StatementVisitor visitor) {
         visitor.visit(this);
     }
 }

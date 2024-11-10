@@ -1,7 +1,7 @@
 package imp.statement;
 
 import imp.condition.Conditional;
-import imp.visitor.GrammarVisitor;
+import imp.visitor.StatementVisitor;
 
 public final class If extends Statement {
     public final Conditional c;
@@ -15,7 +15,7 @@ public final class If extends Statement {
     }
 
     @Override
-    public void accept(GrammarVisitor visitor) {
+    public void accept(StatementVisitor visitor) {
         visitor.visit(this);
     }
 }

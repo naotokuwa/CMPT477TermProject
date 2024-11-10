@@ -1,5 +1,7 @@
 package imp.expression;
 
-import imp.Grammar;
+import imp.visitor.ExpressionVisitor;
 
-public abstract class Expression extends Grammar {}
+public abstract class Expression {
+    public abstract void accept(ExpressionVisitor v);
+}

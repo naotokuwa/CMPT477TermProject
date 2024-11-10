@@ -1,6 +1,6 @@
 package imp.condition;
 
-import imp.visitor.GrammarVisitor;
+import imp.visitor.ConditionVisitor;
 
 public final class Boolean extends Conditional {
     public boolean value;
@@ -10,7 +10,7 @@ public final class Boolean extends Conditional {
     }
 
     @Override
-    public void accept(GrammarVisitor visitor) {
+    public void accept(ConditionVisitor visitor) {
         visitor.visit(this);
     }
 }
