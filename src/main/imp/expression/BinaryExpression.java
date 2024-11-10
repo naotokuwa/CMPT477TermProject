@@ -4,8 +4,8 @@ import imp.visitor.ExpressionVisitor;
 
 public final class BinaryExpression extends Expression {
     public final ExpressionType type;
-    public final Expression left;
-    public final Expression right;
+    public Expression left;
+    public Expression right;
 
     public BinaryExpression(ExpressionType type, Expression left, Expression right) {
         this.type = type;

@@ -13,7 +13,7 @@ public class ConditionSerializeVisitorTest {
     @Test
     public void testTrue() {
         ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
-        Conditional c = new Boolean(true);
+        Condition c = new Boolean(true);
 
         // Perform serialization
         c.accept(visitor);
@@ -26,7 +26,7 @@ public class ConditionSerializeVisitorTest {
     @Test
     public void testFalse() {
         ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
-        Conditional c = new Boolean(false);
+        Condition c = new Boolean(false);
 
         // Perform serialization
         c.accept(visitor);
@@ -41,7 +41,7 @@ public class ConditionSerializeVisitorTest {
         ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
         Expression x = new VariableExpression("x");
         Expression one = new IntegerExpression(1);
-        Conditional c = new BinaryCondition(ConditionType.EQUAL, x, one);
+        Condition c = new BinaryCondition(ConditionType.EQUAL, x, one);
 
         // Perform serialization
         c.accept(visitor);
@@ -56,7 +56,7 @@ public class ConditionSerializeVisitorTest {
         ConditionSerializeVisitor visitor = new ConditionSerializeVisitor();
         Expression x = new VariableExpression("x");
         Expression five = new IntegerExpression(5);
-        Conditional c = new BinaryCondition(ConditionType.LE, x, five);
+        Condition c = new BinaryCondition(ConditionType.LE, x, five);
 
         // Perform serialization
         c.accept(visitor);
@@ -73,13 +73,13 @@ public class ConditionSerializeVisitorTest {
         // 1 <= x
         Expression x = new VariableExpression("x");
         Expression one = new IntegerExpression(1);
-        Conditional c1 = new BinaryCondition(ConditionType.LE, one, x);
+        Condition c1 = new BinaryCondition(ConditionType.LE, one, x);
 
         // x <= 5
         Expression five = new IntegerExpression(5);
-        Conditional c2 = new BinaryCondition(ConditionType.LE, x, five);
+        Condition c2 = new BinaryCondition(ConditionType.LE, x, five);
 
-        Conditional c = new BinaryConnective(ConnectiveType.AND, c1, c2);
+        Condition c = new BinaryConnective(ConnectiveType.AND, c1, c2);
 
         // Perform serialization
         c.accept(visitor);
@@ -96,13 +96,13 @@ public class ConditionSerializeVisitorTest {
         // x == 1
         Expression x = new VariableExpression("x");
         Expression one = new IntegerExpression(1);
-        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, one);
+        Condition c1 = new BinaryCondition(ConditionType.EQUAL, x, one);
 
         // x == -1
         Expression negativeOne = new IntegerExpression(-1);
-        Conditional c2 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
+        Condition c2 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
 
-        Conditional c = new BinaryConnective(ConnectiveType.OR, c1, c2);
+        Condition c = new BinaryConnective(ConnectiveType.OR, c1, c2);
 
         // Perform serialization
         c.accept(visitor);
@@ -119,13 +119,13 @@ public class ConditionSerializeVisitorTest {
         // (x == -1)
         Expression x = new VariableExpression("x");
         Expression negativeOne = new IntegerExpression(-1);
-        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
+        Condition c1 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
 
         // (x <= 0)
         Expression zero = new IntegerExpression(0);
-        Conditional c2 = new BinaryCondition(ConditionType.LE, x, zero);
+        Condition c2 = new BinaryCondition(ConditionType.LE, x, zero);
 
-        Conditional c = new BinaryConnective(ConnectiveType.IMPLIES, c1, c2);
+        Condition c = new BinaryConnective(ConnectiveType.IMPLIES, c1, c2);
 
         // Perform serialization
         c.accept(visitor);
@@ -142,9 +142,9 @@ public class ConditionSerializeVisitorTest {
         // NOT (x == 1)
         Expression x = new VariableExpression("x");
         Expression one = new IntegerExpression(1);
-        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, one);
+        Condition c1 = new BinaryCondition(ConditionType.EQUAL, x, one);
 
-        Conditional c = new UnaryConnective(ConnectiveType.NOT, c1);
+        Condition c = new UnaryConnective(ConnectiveType.NOT, c1);
 
         // Perform serialization
         c.accept(visitor);
@@ -162,20 +162,20 @@ public class ConditionSerializeVisitorTest {
 
         // (x == -1)
         Expression negativeOne = new IntegerExpression(-1);
-        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
+        Condition c1 = new BinaryCondition(ConditionType.EQUAL, x, negativeOne);
 
         // x <= 0
         Expression zero = new IntegerExpression(0);
-        Conditional c2 = new BinaryCondition(ConditionType.LE, x, zero);
+        Condition c2 = new BinaryCondition(ConditionType.LE, x, zero);
 
-        Conditional firstImply = new BinaryConnective(ConnectiveType.IMPLIES, c1, c2);
+        Condition firstImply = new BinaryConnective(ConnectiveType.IMPLIES, c1, c2);
 
         // Second Imply
-        Conditional notC1 = new UnaryConnective(ConnectiveType.NOT, c1);
-        Conditional notC2 = new UnaryConnective(ConnectiveType.NOT, c2);
-        Conditional secondImply = new BinaryConnective(ConnectiveType.IMPLIES, notC1, notC2);
+        Condition notC1 = new UnaryConnective(ConnectiveType.NOT, c1);
+        Condition notC2 = new UnaryConnective(ConnectiveType.NOT, c2);
+        Condition secondImply = new BinaryConnective(ConnectiveType.IMPLIES, notC1, notC2);
 
-        Conditional c = new BinaryConnective(ConnectiveType.AND, firstImply, secondImply);
+        Condition c = new BinaryConnective(ConnectiveType.AND, firstImply, secondImply);
 
         // Perform serialization
         c.accept(visitor);

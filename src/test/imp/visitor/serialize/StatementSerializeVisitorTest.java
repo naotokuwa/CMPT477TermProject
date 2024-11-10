@@ -2,7 +2,7 @@ package imp.visitor.serialize;
 
 import imp.condition.BinaryCondition;
 import imp.condition.ConditionType;
-import imp.condition.Conditional;
+import imp.condition.Condition;
 import imp.expression.*;
 import imp.statement.Assignment;
 import imp.statement.Composition;
@@ -64,7 +64,7 @@ public class StatementSerializeVisitorTest {
         Statement s2 = new Assignment(y, new IntegerExpression((100)));
 
         // If block
-        Conditional c = new BinaryCondition(ConditionType.LE, x, y);
+        Condition c = new BinaryCondition(ConditionType.LE, x, y);
         Statement s3 = new Assignment(minVar, x);
         Statement s4 = new Assignment(minVar, y);
         Statement s5 = new If(c, s3, s4);
@@ -100,19 +100,19 @@ public class StatementSerializeVisitorTest {
         VariableExpression y = new VariableExpression("y");
 
         // First nested if
-        Conditional c1 = new BinaryCondition(ConditionType.EQUAL, y, zero);
+        Condition c1 = new BinaryCondition(ConditionType.EQUAL, y, zero);
         Statement s1 = new Assignment(result, one);
         Statement s2 = new Assignment(result, negativeOne);
         Statement s3 = new If(c1, s1, s2);
 
         // Second nested if
-        Conditional c2 = new BinaryCondition(ConditionType.EQUAL, y, zero);
+        Condition c2 = new BinaryCondition(ConditionType.EQUAL, y, zero);
         Statement s4 = new Assignment(result, negativeOne);
         Statement s5 = new Assignment(result, one);
         Statement s6 = new If(c2, s4, s5);
 
         // Outer if statement
-        Conditional c3 = new BinaryCondition(ConditionType.EQUAL, x, zero);
+        Condition c3 = new BinaryCondition(ConditionType.EQUAL, x, zero);
         Statement s = new If(c3, s3, s6);
 
         // Perform serialization

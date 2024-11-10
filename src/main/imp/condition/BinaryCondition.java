@@ -3,10 +3,10 @@ package imp.condition;
 import imp.expression.Expression;
 import imp.visitor.ConditionVisitor;
 
-public final class BinaryCondition extends Conditional {
+public final class BinaryCondition extends Condition {
     public final ConditionType type;
-    public final Expression left;
-    public final Expression right;
+    public Expression left;
+    public Expression right;
 
     public BinaryCondition(ConditionType type, Expression left, Expression right) {
         this.type = type;
