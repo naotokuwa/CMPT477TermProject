@@ -17,6 +17,13 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.microsoft.z3</groupId>
+            <artifactId>z3</artifactId>
+            <scope>system</scope>
+            <version>4.8.10</version>
+            <systemPath>${pom.basedir}/lib/com.microsoft.z3.jar</systemPath>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.11.3</version>
