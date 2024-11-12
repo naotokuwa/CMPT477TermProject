@@ -10,6 +10,8 @@ import java.util.Map;
 
 final public class ExpressionSerializeVisitor extends ExpressionVisitor  {
     public String result;
+    // Depth for nested BinaryCondition
+    private int depth = 0;
 
     @Override
     public void visit(IntegerExpression e) {
@@ -28,12 +30,18 @@ final public class ExpressionSerializeVisitor extends ExpressionVisitor  {
                 ExpressionType.MUL, "*"
         );
 
+        depth++;
         e.left.accept(this);
         String left = result;
 
         e.right.accept(this);
         String right = result;
+        depth--;
 
         result = left + " " + typeToString.get(e.type) + " " + right;
+
+        if (depth > 0){
+            result  = "( " + result + " )";
+        }
     }
 }

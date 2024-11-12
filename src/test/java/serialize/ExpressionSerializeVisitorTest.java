@@ -37,4 +37,21 @@ public class ExpressionSerializeVisitorTest {
 
         assertEquals(expected, result);
     }
+
+    @Test
+    public void testMultiplyWithNestedAdditionPrint() {
+        ExpressionSerializeVisitor visitor = new ExpressionSerializeVisitor();
+        Expression x = new VariableExpression("x");
+        Expression one = new IntegerExpression(1);
+        Expression addition = new BinaryExpression(ExpressionType.ADD, x, one);
+        Expression multiply = new BinaryExpression(ExpressionType.MUL, addition, addition);
+
+        // Perform serialization
+        multiply.accept(visitor);
+
+        String result = visitor.result;
+        String expected = "( x + 1 ) * ( x + 1 )";
+
+        assertEquals(expected, result);
+    }
 }
