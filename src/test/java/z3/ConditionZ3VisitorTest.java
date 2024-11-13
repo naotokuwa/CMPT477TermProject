@@ -51,12 +51,10 @@ public class ConditionZ3VisitorTest {
         Condition left = new BinaryCondition(ConditionType.LE, x, zero);
         Condition right = new UnaryConnective(ConnectiveType.NOT, left);
         BinaryConnective or = new BinaryConnective(ConnectiveType.OR, left, right);
-        or.accept(visitor);
-        assertTrue(visitor.checkValidity());
+        assertTrue(visitor.checkValidity(or));
 
         // Test Scenario: ( x <= 0 ) is not valid
-        left.accept(visitor);
-        assertFalse(visitor.checkValidity());
+        assertFalse(visitor.checkValidity(left));
     }
 
     /* Boolean Tests */

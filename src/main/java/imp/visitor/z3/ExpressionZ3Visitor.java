@@ -40,15 +40,13 @@ public class ExpressionZ3Visitor extends ExpressionVisitor {
     }
 
     public void visit(BinaryExpression e) {
-        e.left.accept(this);
-        ArithExpr left = result;
-        e.right.accept(this);
-        ArithExpr right = result;
+        ArithExpr left = this.getResult(e.left);
+        ArithExpr right = this.getResult(e.right);
 
         switch (e.type) {
             case ADD -> result = ctx.mkAdd(left, right);
             case MUL -> result = ctx.mkMul(left, right);
-            default -> throw new UnsupportedOperationException("Binary condition type not implemented");
+            default -> throw new UnsupportedOperationException("Binary expression type not implemented");
         }
     }
 }

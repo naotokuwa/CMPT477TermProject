@@ -37,10 +37,8 @@ public class ConditionZ3Visitor extends ConditionVisitor {
     @Override
     public void visit(BinaryCondition c) {
         ExpressionZ3Visitor visitor = new ExpressionZ3Visitor(ctx);
-        c.left.accept(visitor);
-        ArithExpr left = visitor.result;
-        c.right.accept(visitor);
-        ArithExpr right = visitor.result;
+        ArithExpr left = visitor.getResult(c.left);
+        ArithExpr right = visitor.getResult(c.right);
 
         switch (c.type) {
             case EQUAL -> result = ctx.mkEq(left, right);
@@ -51,10 +49,8 @@ public class ConditionZ3Visitor extends ConditionVisitor {
 
     @Override
     public void visit(BinaryConnective c) {
-        c.left.accept(this);
-        BoolExpr left = result;
-        c.right.accept(this);
-        BoolExpr right = result;
+        BoolExpr left = getResult(c.left);
+        BoolExpr right = getResult(c.right);
 
         switch (c.type) {
             case AND -> result = ctx.mkAnd(left, right);
@@ -75,9 +71,11 @@ public class ConditionZ3Visitor extends ConditionVisitor {
     }
 
     /**
-     * @return The validity of the last visited Condition
+     * @param condition The condition to check
+     * @return The validity of the given condition
      */
-    public boolean checkValidity() {
+    public boolean checkValidity(Condition condition) {
+        condition.accept(this);
         return isValid(result);
     }
 
