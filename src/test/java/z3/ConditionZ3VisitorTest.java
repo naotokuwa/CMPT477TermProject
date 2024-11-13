@@ -41,6 +41,9 @@ public class ConditionZ3VisitorTest {
         Condition le = new BinaryCondition(ConditionType.LE, x, zero);
         BoolExpr result = visitor.getResult(le);
         assertEquals(ctx.mkLe(ctx.mkIntConst("x"), ctx.mkInt(0)), result);
+
+        // x <= 0 is not valid
+        assertFalse(visitor.checkValidity(le));
     }
 
     @Test
@@ -68,6 +71,10 @@ public class ConditionZ3VisitorTest {
         Condition f = new Boolean(false);
         result = visitor.getResult(f);
         assertEquals(ctx.mkFalse(), result);
+
+        // True is valid, False is not valid
+        assertTrue(visitor.checkValidity(t));
+        assertFalse(visitor.checkValidity(f));
     }
 
     /* Binary Condition Tests */
@@ -82,6 +89,9 @@ public class ConditionZ3VisitorTest {
         Condition equals = new BinaryCondition(ConditionType.EQUAL, one, one);
         BoolExpr result = visitor.getResult(equals);
         assertEquals(expected, result);
+
+        // 1 = 1 is valid
+        assertTrue(visitor.checkValidity(equals));
     }
 
     @Test
@@ -94,6 +104,9 @@ public class ConditionZ3VisitorTest {
         Condition le = new BinaryCondition(ConditionType.LE, one, two);
         BoolExpr result = visitor.getResult(le);
         assertEquals(expected, result);
+
+        // 1 <= 2 is valid
+        assertTrue(visitor.checkValidity(le));
     }
 
     /* Binary Connective Tests */
@@ -114,6 +127,9 @@ public class ConditionZ3VisitorTest {
         BinaryConnective and = new BinaryConnective(ConnectiveType.AND, left, right);
         BoolExpr result = visitor.getResult(and);
         assertEquals(expected, result);
+
+        // x <= 0 AND y <= 0 is not valid
+        assertFalse(visitor.checkValidity(and));
     }
 
     @Test
@@ -132,6 +148,9 @@ public class ConditionZ3VisitorTest {
         BinaryConnective or = new BinaryConnective(ConnectiveType.OR, left, right);
         BoolExpr result = visitor.getResult(or);
         assertEquals(expected, result);
+
+        // x <= 0 OR y <= 0 is not valid
+        assertFalse(visitor.checkValidity(or));
     }
 
     @Test
@@ -150,6 +169,9 @@ public class ConditionZ3VisitorTest {
         BinaryConnective implies = new BinaryConnective(ConnectiveType.IMPLIES, left, right);
         BoolExpr result = visitor.getResult(implies);
         assertEquals(expected, result);
+
+        // ( x <= 0 ) ==> ( y <= 0 ) is not valid
+        assertFalse(visitor.checkValidity(implies));
     }
 
     @Test
@@ -187,6 +209,9 @@ public class ConditionZ3VisitorTest {
         BinaryConnective outerImplies = new BinaryConnective(ConnectiveType.IMPLIES, left, right);
         BoolExpr result = visitor.getResult(outerImplies);
         assertEquals(expected, result);
+
+        // ( ( x <= 0 AND y <= 0 ) OR ( z <= 10 ) ) ==> ( x = y ) is not valid
+        assertFalse(visitor.checkValidity(outerImplies));
     }
 
     /* Unary Connective Tests */
@@ -215,5 +240,14 @@ public class ConditionZ3VisitorTest {
         expected = ctx.mkNot(ctx.mkNot(ctx.mkTrue()));
         result = visitor.getResult(notNotTrue);
         assertEquals(expected, result);
+
+        // NOT( true ) is not valid
+        assertFalse(visitor.checkValidity(notTrue));
+
+        // NOT( x <= 0 ) is not valid
+        assertFalse(visitor.checkValidity(notF1));
+
+        // NOT( NOT( true ) ) is valid
+        assertTrue(visitor.checkValidity(notNotTrue));
     }
 }
