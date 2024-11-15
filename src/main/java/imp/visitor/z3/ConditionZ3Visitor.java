@@ -5,6 +5,9 @@ import imp.condition.*;
 import imp.condition.Boolean;
 import imp.visitor.ConditionVisitor;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Creates a z3 object representing a Condition.
  */
@@ -27,6 +30,45 @@ public class ConditionZ3Visitor extends ConditionVisitor {
     public BoolExpr getResult(Condition c) {
         c.accept(this);
         return result;
+    }
+
+    /**
+     * @param condition The condition to check
+     * @return The validity of the given condition
+     */
+    public boolean checkValidity(Condition condition) {
+        condition.accept(this);
+        return isValid(result);
+    }
+
+    /**
+     * @param condition The condition used to generate the counterexample
+     * @return A counterexample if the condition is invalid, otherwise an
+     * empty string
+     */
+    public String getCounterExample(Condition condition) {
+        Solver solver = ctx.mkSolver();
+        condition.accept(this);
+        BoolExpr negation = ctx.mkNot(result);
+        solver.add(negation);
+        Status status = solver.check();
+
+        if (status == Status.UNSATISFIABLE) {
+            return "";
+        }
+
+        String z3Output = solver.getModel().toString();
+        String regex = "\\(define-fun\\s+(\\w+).*\n\\s+(\\w+)\\)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(z3Output);
+        StringBuilder counterExample = new StringBuilder("Counterexample:\n");
+        while (matcher.find()) {
+            String symbol = matcher.group(1);
+            String value = matcher.group(2);
+            counterExample.append(symbol).append(" = ").append(value).append("\n");
+        }
+
+        return counterExample.toString();
     }
 
     @Override
@@ -68,15 +110,6 @@ public class ConditionZ3Visitor extends ConditionVisitor {
             case NOT -> result = ctx.mkNot(result);
             default -> throw new UnsupportedOperationException("Unary connective type not implemented");
         }
-    }
-
-    /**
-     * @param condition The condition to check
-     * @return The validity of the given condition
-     */
-    public boolean checkValidity(Condition condition) {
-        condition.accept(this);
-        return isValid(result);
     }
 
     private boolean isValid(BoolExpr formula) {
