@@ -2,10 +2,13 @@ package replacement;
 
 import imp.expression.*;
 import imp.visitor.replacement.ExpressionReplacementVisitor;
+import imp.visitor.replacement.CopyVisitor;
 import imp.visitor.serialize.ExpressionSerializeVisitor;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 public class ExpressionReplacementVisitorTest {
     private void checkSerializationResult(Expression expression, String expectedResult){
@@ -151,5 +154,44 @@ public class ExpressionReplacementVisitorTest {
         // Check the serialized expression
         String expected = "( y + 1 ) * ( y + 1 )";
         checkSerializationResult(resultAfterReplacement, expected);
+    }
+
+    @Test
+    public void testReplaceDeepCopy()
+    {
+        // Test scenario
+        // Q: {(x * y) * (x * y)}
+        // S: x := y; y := y + 1
+        // Q[y/x] => { ((y + 1) * (y + 1)) * ((y + 1) * (y + 1)) }
+
+        CopyVisitor copier = new CopyVisitor();
+        ExpressionReplacementVisitor replacer;
+        // Q
+        Expression x = new VariableExpression("x");
+        Expression y = new VariableExpression("y");
+        Expression expr1 = new BinaryExpression(ExpressionType.MUL, x, y);
+        expr1.accept(copier);
+        Expression expr2 = copier.result;
+        Expression expr = new BinaryExpression(ExpressionType.MUL, expr1, expr2);
+
+        // replace x
+        Expression y1 = new VariableExpression("y");
+        replacer = new ExpressionReplacementVisitor("x", y1);
+        expr.accept(replacer);
+        Expression after1 = replacer.result;
+
+        // replace y
+        Expression y2 = new VariableExpression("y");
+        Expression one = new IntegerExpression(1);
+        BinaryExpression add = new BinaryExpression(ExpressionType.ADD, y2, one);
+        replacer = new ExpressionReplacementVisitor("y", add);
+        after1.accept(replacer);
+        Expression after2 = replacer.result;
+
+        // change repalcement expr to ensure the new result copied it (and not its reference)
+        add.left = new VariableExpression("z");
+        // Check the serialized expression
+        String expected = "( ( y + 1 ) * ( y + 1 ) ) * ( ( y + 1 ) * ( y + 1 ) )";
+        checkSerializationResult(after2, expected);
     }
 }
