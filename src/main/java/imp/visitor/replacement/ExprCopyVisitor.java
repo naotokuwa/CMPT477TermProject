@@ -7,7 +7,7 @@ import imp.expression.Expression;
 import imp.visitor.ExpressionVisitor;
 
 
-public class CopyVisitor extends ExpressionVisitor
+public class ExprCopyVisitor extends ExpressionVisitor
 {
     public Expression result;
 

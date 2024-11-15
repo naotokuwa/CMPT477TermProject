@@ -26,7 +26,7 @@ public class ExpressionReplacementVisitor extends ExpressionVisitor {
         result = e;
 
         if (targetSymbol.equals(e.symbol)){
-            CopyVisitor copier = new CopyVisitor();
+            ExprCopyVisitor copier = new ExprCopyVisitor();
             toReplace.accept(copier);
             result = copier.result;
         }

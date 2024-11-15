@@ -2,7 +2,7 @@ package replacement;
 
 import imp.expression.*;
 import imp.visitor.replacement.ExpressionReplacementVisitor;
-import imp.visitor.replacement.CopyVisitor;
+import imp.visitor.replacement.ExprCopyVisitor;
 import imp.visitor.serialize.ExpressionSerializeVisitor;
 
 import org.junit.jupiter.api.Test;
@@ -164,7 +164,7 @@ public class ExpressionReplacementVisitorTest {
         // S: x := y; y := y + 1
         // Q[y/x] => { ((y + 1) * (y + 1)) * ((y + 1) * (y + 1)) }
 
-        CopyVisitor copier = new CopyVisitor();
+        ExprCopyVisitor copier = new ExprCopyVisitor();
         ExpressionReplacementVisitor replacer;
         // Q
         Expression x = new VariableExpression("x");
