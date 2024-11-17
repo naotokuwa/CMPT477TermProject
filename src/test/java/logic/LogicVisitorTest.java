@@ -118,6 +118,7 @@ public class LogicVisitorTest
         // test reverse order
         // x := 1; y := x;
         // {x <= y}
+        solver = new LogicVisitor(q);
         Composition comp2 = new Composition(x_eq_1, y_eq_x);
         comp2.accept(solver);
 
@@ -244,7 +245,7 @@ public class LogicVisitorTest
     @Test
     public void test_comp_comp()
     {
-        // y := x; x := 1; x := z;
+        // (y := x; x := 1;) x := z;
         // {x <= y}
         VariableExpression z = new VariableExpression("z");
         Assignment x_eq_z = new Assignment(x, z);
@@ -263,8 +264,9 @@ public class LogicVisitorTest
 
 
         // test reverse order
-        // x := z; y := x; x := 1;
+        // x := z; (y := x; x := 1);
         // {x <= y}
+        solver = new LogicVisitor(q);
         comp_comp = new Composition(x_eq_z, comp);
         comp_comp.accept(solver);
 

@@ -14,49 +14,41 @@ import imp.visitor.replacement.ConditionReplacementVisitor;
 
 public class LogicVisitor extends StatementVisitor
 {
-    public Condition q;
     public Condition result;
 
 
-    public LogicVisitor(Condition q) { this.q = q; }
+    // saves copy of q to avoid mutating original obj
+    public LogicVisitor(Condition q) 
+    { 
+        CondCopyVisitor copier = new CondCopyVisitor();
+        q.accept(copier);
+        this.result = copier.result;
+    }
 
     @Override
     public void visit(Assignment s)
     {
-        // save original q bc replacer mutates it
-        Condition orig = q;
-        CondCopyVisitor copier = new CondCopyVisitor();
-        q.accept(copier);
-        q = copier.result;
-
         ConditionReplacementVisitor replacer = new ConditionReplacementVisitor(s.v.symbol, s.e);
-        q.accept(replacer);
-
-        q = orig;
-        result = replacer.result;
+        result.accept(replacer); // mutates result
     }
 
     @Override
     public void visit(Composition s)
     {
         s.after.accept(this);
-        Condition wp2 = result;
-
-        // save q and set q = wp2
-        Condition orig = q;
-        CondCopyVisitor copier = new CondCopyVisitor();
-        wp2.accept(copier);
-        q = copier.result;
-
+        // q = wp2
         s.before.accept(this);
-
-        // restore q
-        q = orig;
     }
 
     @Override
     public void visit(If s)
     {
+        // save q
+        Condition orig;
+        CondCopyVisitor copier = new CondCopyVisitor();
+        result.accept(copier);
+        orig = copier.result;
+
         CondCopyVisitor cond_copier = new CondCopyVisitor();
 
         // true branch C -> wp(s1, Q)
@@ -64,16 +56,19 @@ public class LogicVisitor extends StatementVisitor
         Condition cond = cond_copier.result;
 
         s.thenStatement.accept(this);
-        Condition true_wp = result;
+        result.accept(copier);
+        Condition true_wp = copier.result;
         BinaryConnective true_b = new BinaryConnective(ConnectiveType.IMPLIES, cond, true_wp);
 
+        result = orig;
 
         // false branch !C -> wp(s2, Q)
         s.c.accept(cond_copier);
         Condition not_cond = new UnaryConnective(ConnectiveType.NOT, cond_copier.result);
 
         s.elseStatement.accept(this);
-        Condition false_wp = result;
+        result.accept(copier);
+        Condition false_wp = copier.result;
         BinaryConnective false_b = new BinaryConnective(ConnectiveType.IMPLIES, not_cond, false_wp);
 
 
