@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
  */
 public class ConditionZ3Visitor extends ConditionVisitor {
     private final Context ctx;
+    private Condition oldCondition;
+    private String cachedModel;
     public BoolExpr result;
 
     /**
@@ -50,24 +52,19 @@ public class ConditionZ3Visitor extends ConditionVisitor {
      * is invalid, otherwise an empty string
      */
     public String getCounterexampleAsString(Condition condition) {
-        Solver solver = ctx.mkSolver();
-        condition.accept(this);
-        BoolExpr negation = ctx.mkNot(result);
-        solver.add(negation);
-        Status status = solver.check();
+        String z3Output = getCounterexampleRaw(condition);
 
-        if (status == Status.UNSATISFIABLE) {
+        if (z3Output.equals("")) {
             return "";
         }
 
-        String z3Output = solver.getModel().toString();
-        String regex = "\\(define-fun\\s+(\\w+).*\n\\s+(\\w+)\\)";
+        String regex = "\\(define-fun\\s+(\\w+).*\n\\s+[(]?([\\w\\s-]+)[)]?\\)";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(z3Output);
         StringBuilder counterExample = new StringBuilder("Counterexample:\n");
         while (matcher.find()) {
             String symbol = matcher.group(1);
-            String value = matcher.group(2);
+            String value = matcher.group(2).replaceAll("\\s", "");
             counterExample.append(symbol).append(" = ").append(value).append("\n");
         }
 
@@ -85,6 +82,29 @@ public class ConditionZ3Visitor extends ConditionVisitor {
             return new HashMap<>();
         }
         return z3StringToMap(z3Output);
+    }
+
+    public String getCounterexampleRaw(Condition condition) {
+        // Cache to avoid having to repeatedly invoke z3 and the visitor upon
+        // repeated calls to getCounterexample methods
+        if (condition == oldCondition) {
+            return cachedModel;
+        } else {
+            oldCondition = condition;
+        }
+
+        Solver solver = ctx.mkSolver();
+        condition.accept(this);
+        BoolExpr negation = ctx.mkNot(result);
+        solver.add(negation);
+        Status status = solver.check();
+
+        if (status == Status.UNSATISFIABLE) {
+            return "";
+        }
+
+        cachedModel = solver.getModel().toString();
+        return cachedModel;
     }
 
     @Override
