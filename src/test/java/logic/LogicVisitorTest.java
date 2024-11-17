@@ -86,6 +86,8 @@ public class LogicVisitorTest
     @Test
     public void test_assignment()
     {
+        // x := 1
+        // {x <= y}
         LogicVisitor solver = new LogicVisitor(q);
         x_eq_1.accept(solver);
 
@@ -93,7 +95,8 @@ public class LogicVisitorTest
 
 
         // more than one occurence
-        // x <= x
+        // x := 1
+        // {x <= x}
         VariableExpression x2 = new VariableExpression("x");
         BinaryCondition q2 = new BinaryCondition(ConditionType.LE, x, x);
         solver = new LogicVisitor(q2);
@@ -105,6 +108,8 @@ public class LogicVisitorTest
     @Test
     public void test_composition()
     {
+        // y := x; x := 1;
+        // {x <= y}
         LogicVisitor solver = new LogicVisitor(q);
         comp.accept(solver);
 
@@ -113,9 +118,8 @@ public class LogicVisitorTest
 
         // test reverse order
         // x := 1; y := x;
+        // {x <= y}
         Composition comp2 = new Composition(x_eq_1, y_eq_x);
-
-        // x <= y
         comp2.accept(solver);
 
         checkSerializationResult(solver.result, "1 <= 1");
@@ -124,7 +128,8 @@ public class LogicVisitorTest
     @Test
     public void test_if()
     {
-        // x <= y
+        // if x == y then x := 1 else x := y
+        // {x <= y}
         LogicVisitor solver = new LogicVisitor(q);
         if_stmnt.accept(solver);
 
@@ -135,7 +140,8 @@ public class LogicVisitorTest
     @Test
     public void test_complex_q()
     {
-        // (x <= y) && (x + 2 == y)
+        // x := 1
+        // {(x <= y) && (x + 2 == y)}
         BinaryCondition left = x_le_y;
 
         IntegerExpression two = new IntegerExpression(2);
@@ -173,9 +179,9 @@ public class LogicVisitorTest
     public void test_if_comp()
     {
         // if x == y then y := x; x := 1; else x := y
+        // {x <= y}
         If tmp_if = if_stmnt;
         if_stmnt = new If(is_x_eq_y, comp, x_eq_y);
-        // x <= y
         LogicVisitor solver = new LogicVisitor(q);
         if_stmnt.accept(solver);
 
@@ -200,9 +206,9 @@ public class LogicVisitorTest
     public void test_comp_if()
     {
         // (if x == y then x := 1; else x := y); x := 1
+        // {x <= y}
         Composition tmp_comp = comp;
         comp = new Composition(x_eq_1, if_stmnt);
-        // x <= y
         LogicVisitor solver = new LogicVisitor(q);
         comp.accept(solver);
 
@@ -215,6 +221,62 @@ public class LogicVisitorTest
 
         // reset comp so later asserts dont fail
         comp = tmp_comp;
+    }
+
+    @Test
+    public void test_if_if()
+    {
+        // if x <= y then (if x == y then x := 1 else x := y) else y := x
+        // {x <= y}
+        If outer_if = new If(q, if_stmnt, y_eq_x);
+        LogicVisitor solver = new LogicVisitor(q);
+        outer_if.accept(solver);
+
+        String if_res = "( ( x == y ) ==> ( 1 <= y ) ) AND ( ( NOT( x == y ) ) ==> ( y <= y ) )";
+        String res = "( ( x <= y ) ==> ( " + if_res + " ) ) AND ( ( NOT( x <= y ) ) ==> ( x <= x ) )";
+        checkSerializationResult(solver.result, res);
+
+        // check inputs weren't changed
+        assertSame(outer_if.c, q);
+        assertSame(outer_if.thenStatement, if_stmnt);
+        assertSame(outer_if.elseStatement, y_eq_x);
+    }
+    
+    @Test
+    public void test_comp_comp()
+    {
+        // y := x; x := 1; x := z;
+        // {x <= y}
+        VariableExpression z = new VariableExpression("z");
+        Assignment x_eq_z = new Assignment(x, z);
+        Composition comp_comp = new Composition(comp, x_eq_z);
+        LogicVisitor solver = new LogicVisitor(q);
+        comp_comp.accept(solver);
+
+        checkSerializationResult(solver.result, "z <= x");
+
+        // check inputs unchanged
+        assertSame(comp_comp.after, x_eq_z);
+        assertSame(comp_comp.before, comp);
+        assertSame(x_eq_z.e, z);
+        assertSame(x_eq_z.v, x);
+        assertEquals(z.symbol, "z");
+
+
+        // test reverse order
+        // x := z; y := x; x := 1;
+        // {x <= y}
+        comp_comp = new Composition(x_eq_z, comp);
+        comp_comp.accept(solver);
+
+        checkSerializationResult(solver.result, "1 <= z");
+
+        // check inputs unchanged
+        assertSame(comp_comp.before, x_eq_z);
+        assertSame(comp_comp.after, comp);
+        assertSame(x_eq_z.e, z);
+        assertSame(x_eq_z.v, x);
+        assertEquals(z.symbol, "z");
     }
 
 
