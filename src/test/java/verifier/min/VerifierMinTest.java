@@ -7,11 +7,16 @@ import imp.visitor.serialize.StatementSerializeVisitor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import verifier.Verifier;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VerifierMinTest {
     private StatementSerializeVisitor visitor;
     private Statement program;
+    private Verifier verifier;
 
     private String expectedSerializedProgram(){
         String expected = "minVal := x\n";
@@ -27,8 +32,7 @@ public class VerifierMinTest {
     private Statement createMeaningLessStatement(){
         VariableExpression tmp = new VariableExpression("tmp");
         Expression one  = new IntegerExpression(1);
-        Assignment statement = new Assignment(tmp, one);
-        return statement;
+        return new Assignment(tmp, one);
     }
 
     private Statement createProgram(){
@@ -70,10 +74,89 @@ public class VerifierMinTest {
     @BeforeEach public void setUp() {
         visitor = new StatementSerializeVisitor();
         this.program = createProgram();
+        verifier = new Verifier();
     }
     
     @Test
-    void MinValid1(){
-        System.out.println("TO BE IMPLEMENTED");
+    void MinValidNoPrecondition(){
+        // Postcondition:
+        // minVal == x || minVal == y
+        // minVal <= x && minVal <= y
+        VariableExpression minVal = new VariableExpression("minVal");
+        Expression x = new VariableExpression("x");
+        Expression y  = new VariableExpression("y");
+        BinaryCondition x_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, x);
+        BinaryCondition y_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, y);
+        BinaryConnective condition1 = new BinaryConnective(ConnectiveType.OR, x_eq_minVal, y_eq_minVal);
+        BinaryCondition minVal_le_x = new BinaryCondition(ConditionType.LE, minVal, x);
+        BinaryCondition minVal_le_y = new BinaryCondition(ConditionType.LE, minVal, y);
+        BinaryConnective condition2 = new BinaryConnective(ConnectiveType.AND, minVal_le_x, minVal_le_y);
+        BinaryConnective postcondition = new BinaryConnective(ConnectiveType.AND, condition1, condition2);
+
+        boolean isValid = verifier.verify(program, postcondition);
+        assertTrue(isValid);
+    }
+
+    @Test
+    void MinValidWithPrecondition() {
+        // Precondition: x == y
+        // Postcondition: minVal == x && minVal == y
+        VariableExpression minVal = new VariableExpression("minVal");
+        Expression x = new VariableExpression("x");
+        Expression y  = new VariableExpression("y");
+        BinaryCondition precondition = new BinaryCondition(ConditionType.EQUAL, x, y);
+        BinaryCondition x_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, x);
+        BinaryCondition y_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, y);
+        BinaryConnective postcondition = new BinaryConnective(ConnectiveType.AND, x_eq_minVal, y_eq_minVal);
+
+        boolean isValid = verifier.verify(program, precondition, postcondition);
+        assertTrue(isValid);
+    }
+
+    @Test
+    void MinInvalidNoPrecondition() {
+        // Postcondition: minVal == x && minVal == y
+        VariableExpression minVal = new VariableExpression("minVal");
+        Expression x = new VariableExpression("x");
+        Expression y  = new VariableExpression("y");
+        BinaryCondition x_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, x);
+        BinaryCondition y_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, y);
+        BinaryConnective postcondition = new BinaryConnective(ConnectiveType.AND, x_eq_minVal, y_eq_minVal);
+
+        boolean isValid = verifier.verify(program, postcondition);
+        assertFalse(isValid);
+
+        /* Test counterexamples */
+
+        // Testing strings is difficult since z3 can return different values
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertNotEquals(map.get("x"), map.get("y"));
+    }
+
+    @Test
+    void MinInvalidWithPrecondition() {
+        // Precondition: x <= 0
+        // Postcondition: x == minVal
+        Expression x1 = new VariableExpression("x");
+        Expression x2 = new VariableExpression("x");
+        IntegerExpression zero = new IntegerExpression(0);
+        VariableExpression minVal = new VariableExpression("minVal");
+        BinaryCondition precondition = new BinaryCondition(ConditionType.LE, x1, zero);
+        BinaryCondition postcondition = new BinaryCondition(ConditionType.EQUAL, x2, minVal);
+
+        boolean isValid = verifier.verify(program, precondition, postcondition);
+        assertFalse(isValid);
+
+        /* Test counterexamples */
+
+        // Testing strings is difficult since z3 can return different values
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertTrue(map.get("x") > map.get("y"));
     }
 }

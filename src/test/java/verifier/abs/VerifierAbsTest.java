@@ -7,11 +7,16 @@ import imp.visitor.serialize.StatementSerializeVisitor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import verifier.Verifier;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VerifierAbsTest {
     private StatementSerializeVisitor visitor;
     private Statement program;
+    private Verifier verifier;
 
     // Expected Serialized Abs IMP Program
     private String expectedSerializedProgram() {
@@ -58,10 +63,72 @@ public class VerifierAbsTest {
     @BeforeEach public void setUp() {
       visitor = new StatementSerializeVisitor();
       this.program = createProgram();
+      verifier = new Verifier();
     }
     
     @Test
-    void AbsValid1(){
-      System.out.println("TO BE IMPLEMENTED");
+    void AbsValidNoPrecondition() {
+        // Postcondition: 0 <= y
+        Condition postcondition = new BinaryCondition(ConditionType.LE,
+                                  new IntegerExpression(0),
+                                  new VariableExpression("y"));
+
+        assertTrue(verifier.verify(program, postcondition));
+    }
+
+    @Test
+    void AbsValidWithPrecondition() {
+        // Precondition: x <= 0
+        // Postcondition: 0 <= y
+        Condition precondition = new BinaryCondition(ConditionType.LE,
+                                 new VariableExpression("x"),
+                                 new IntegerExpression(0));
+        Condition postcondition = new BinaryCondition(ConditionType.LE,
+                                  new IntegerExpression(0),
+                                  new VariableExpression("y"));
+
+        assertTrue(verifier.verify(program, precondition, postcondition));
+    }
+
+    @Test
+    void AbsInvalidNoPrecondition() {
+        // Postcondition: y <= 0
+        Condition postcondition = new BinaryCondition(ConditionType.LE,
+                                  new VariableExpression("y"),
+                                  new IntegerExpression(0));
+
+        assertFalse(verifier.verify(program, postcondition));
+
+        /* Test counterexamples */
+
+        // Testing strings is difficult since z3 can return different values
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertTrue(map.containsKey("x"));
+    }
+
+    @Test
+    void AbsInvalidWithPrecondition() {
+        // Precondition: x == -1
+        // Postcondition: y <= 0
+        Condition precondition = new BinaryCondition(ConditionType.EQUAL,
+                                 new VariableExpression("x"),
+                                 new IntegerExpression(-1));
+        Condition postcondition = new BinaryCondition(ConditionType.LE,
+                                  new VariableExpression("y"),
+                                  new IntegerExpression(0));
+
+        assertFalse(verifier.verify(program, precondition, postcondition));
+
+        /* Test counterexamples */
+
+        // Testing strings is difficult since z3 can return different values
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertEquals(-1, map.get("x"));
     }
 }
