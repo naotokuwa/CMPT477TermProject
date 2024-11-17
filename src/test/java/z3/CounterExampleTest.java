@@ -10,16 +10,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the getCounterExample method of ConditionZ3Visitor.
+ * Tests for the getCounterexample methods of ConditionZ3Visitor.
  *
- * @see imp.visitor.z3.ConditionZ3Visitor#getCounterExample(Condition)
+ * @see imp.visitor.z3.ConditionZ3Visitor#getCounterexampleAsString(Condition)
+ * @see imp.visitor.z3.ConditionZ3Visitor#getCounterexampleAsMap(Condition)
  */
 public class CounterExampleTest {
     private Context ctx;
@@ -43,9 +42,7 @@ public class CounterExampleTest {
         IntegerExpression zero = new IntegerExpression(0);
         BinaryCondition x_le_0 = new BinaryCondition(ConditionType.LE, x, zero);
 
-        String counterExample = visitor.getCounterExample(x_le_0);
-        Map<String, Integer> symbolToVal = parseCounterexample(counterExample);
-
+        Map<String, Integer> symbolToVal = visitor.getCounterexampleAsMap(x_le_0);
         assertTrue(symbolToVal.get("x") > 0);
     }
 
@@ -63,8 +60,7 @@ public class CounterExampleTest {
         BinaryConnective and = new BinaryConnective(ConnectiveType.AND, x_eq_y, y_eq_z);
         and = new BinaryConnective(ConnectiveType.AND, and, x_eq_z);
 
-        String counterExample = visitor.getCounterExample(and);
-        Map<String, Integer> symbolToVal = parseCounterexample(counterExample);
+        Map<String, Integer> symbolToVal = visitor.getCounterexampleAsMap(and);
 
         boolean expected = symbolToVal.get("x") != 0
                         || symbolToVal.get("y") != 0
@@ -76,29 +72,27 @@ public class CounterExampleTest {
     public void testValidCondition() {
         // Test Scenario: TRUE is valid
         Boolean t = new Boolean(true);
-        String counterExample = visitor.getCounterExample(t);
+        String counterExample = visitor.getCounterexampleAsString(t);
         String expected = "";
         assertEquals(expected, counterExample);
     }
 
-    /**
-     *  A helper function to make testing of string outputs less brittle
-     *
-     * @param input The output of a call to getCounterExample
-     * @return A map from symbols to values
-     */
-    private Map<String, Integer> parseCounterexample(String input) {
-        Map<String, Integer> symbolToVal = new HashMap<>();
-        Scanner scanner = new Scanner(input);
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            String[] tokens = line.split("=");
-            if (tokens.length == 2) {
-                String symbol = tokens[0].trim();
-                int val = Integer.parseInt(tokens[1].trim());
-                symbolToVal.put(symbol, val);
-            }
-        }
-        return symbolToVal;
+    @Test
+    public void testStringOutput() {
+        // Using a simple test case forces the output to be determinate and
+        // makes testing strings easier.
+        // Test Scenario: NOT( x = 0 )
+        VariableExpression x = new VariableExpression("x");
+        IntegerExpression zero = new IntegerExpression(0);
+        BinaryCondition x_eq_zero = new BinaryCondition(ConditionType.EQUAL, x, zero);
+        UnaryConnective x_ne_zero = new UnaryConnective(ConnectiveType.NOT, x_eq_zero);
+
+        String stringOutput = visitor.getCounterexampleAsString(x_ne_zero);
+        String expected = """
+                Counterexample:
+                x = 0
+                """;
+
+        assertEquals(expected, stringOutput);
     }
 }

@@ -5,6 +5,9 @@ import imp.condition.*;
 import imp.condition.Boolean;
 import imp.visitor.ConditionVisitor;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,10 +46,10 @@ public class ConditionZ3Visitor extends ConditionVisitor {
 
     /**
      * @param condition The condition used to generate the counterexample
-     * @return A counterexample if the condition is invalid, otherwise an
-     * empty string
+     * @return A string representation of a counterexample if the condition
+     * is invalid, otherwise an empty string
      */
-    public String getCounterExample(Condition condition) {
+    public String getCounterexampleAsString(Condition condition) {
         Solver solver = ctx.mkSolver();
         condition.accept(this);
         BoolExpr negation = ctx.mkNot(result);
@@ -69,6 +72,19 @@ public class ConditionZ3Visitor extends ConditionVisitor {
         }
 
         return counterExample.toString();
+    }
+
+    /**
+     * @param condition The condition used to generate the counterexample
+     * @return A map representation of a counterexample if the condition
+     * is invalid, otherwise an empty map
+     */
+    public Map<String, Integer> getCounterexampleAsMap(Condition condition) {
+        String z3Output = getCounterexampleAsString(condition);
+        if (z3Output.equals("")) {
+            return new HashMap<>();
+        }
+        return z3StringToMap(z3Output);
     }
 
     @Override
@@ -117,5 +133,24 @@ public class ConditionZ3Visitor extends ConditionVisitor {
         BoolExpr negation = ctx.mkNot(formula);
         solver.add(negation);
         return solver.check() == Status.UNSATISFIABLE;
+    }
+
+    /**
+     * @param input The string representation given by getCounterexampleAsString()
+     * @return A map from symbols to values
+     */
+    private Map<String, Integer> z3StringToMap(String input) {
+        Map<String, Integer> symbolToVal = new HashMap<>();
+        Scanner scanner = new Scanner(input);
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            String[] tokens = line.split("=");
+            if (tokens.length == 2) {
+                String symbol = tokens[0].trim();
+                int val = Integer.parseInt(tokens[1].trim());
+                symbolToVal.put(symbol, val);
+            }
+        }
+        return symbolToVal;
     }
 }
