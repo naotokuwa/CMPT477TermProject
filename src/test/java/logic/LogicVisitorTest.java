@@ -138,6 +138,33 @@ public class LogicVisitorTest
     }
 
     @Test
+    public void test_no_q()
+    {
+        // if x == y then x := 1 else x := y
+        // {}
+        LogicVisitor solver = new LogicVisitor();
+        if_stmnt.accept(solver);
+
+        String res = "true";
+        checkSerializationResult(solver.result, res);
+
+
+        // y := x; x := 1;
+        // {}
+        solver = new LogicVisitor();
+        comp.accept(solver);
+
+        checkSerializationResult(solver.result, res);
+
+        // x := 1
+        // {}
+        solver = new LogicVisitor();
+        x_eq_1.accept(solver);
+
+        checkSerializationResult(solver.result, res);
+    }
+
+    @Test
     public void test_complex_q()
     {
         // x := 1
@@ -241,7 +268,7 @@ public class LogicVisitorTest
         assertSame(outer_if.thenStatement, if_stmnt);
         assertSame(outer_if.elseStatement, y_eq_x);
     }
-    
+
     @Test
     public void test_comp_comp()
     {
