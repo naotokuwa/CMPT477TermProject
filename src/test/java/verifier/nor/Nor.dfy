@@ -3,11 +3,18 @@
 // —i.e. when both p and q are false.
 // - Wikipedia, Logical NOR 
 
-method NorValid1(a: bool, b: bool) returns (nor: bool)
-  ensures a == false && b == false ==> nor == true 
-  ensures a == true && b == false ==> nor == false
-  ensures a == false && b == true ==> nor == false
-  ensures a == true && b == true ==> nor == false
+// 1 == true, 2 == false
+method NorValid1(a: int, b: int) returns (nor: int)
+  requires a == 1 || a == 0
+  requires b == 1 || b == 0
+  ensures a == 0 && b == 0 ==> nor == 1
+  ensures a == 1 && b == 0 ==> nor == 0
+  ensures a == 0 && b == 1 ==> nor == 0
+  ensures a == 1 && b == 1 ==> nor == 0
 {
-  nor := !(a || b);
+  if( a == 0 && b == 0 ) {
+    nor := 1;
+  } else {
+    nor := 0;
+  }
 }
