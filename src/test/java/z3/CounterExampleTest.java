@@ -51,23 +51,25 @@ public class CounterExampleTest {
 
     @Test
     public void testMultipleVariables() {
-        // Test Scenario: ( x = y ) AND ( y = z ) ==> NOT( x = z ) is not valid
+        // Test Scenario: ( x = 0 ) AND ( y = 0 ) AND ( z = 0 ) is not valid
         VariableExpression x = new VariableExpression("x");
         VariableExpression y = new VariableExpression("y");
         VariableExpression z = new VariableExpression("z");
+        IntegerExpression zero = new IntegerExpression(0);
 
-        BinaryCondition x_eq_y = new BinaryCondition(ConditionType.EQUAL, x, y);
-        BinaryCondition y_eq_z = new BinaryCondition(ConditionType.EQUAL, y, z);
-        BinaryCondition x_eq_z = new BinaryCondition(ConditionType.EQUAL, x, z);
-        UnaryConnective x_neq_q = new UnaryConnective(ConnectiveType.NOT, x_eq_z);
-        BinaryConnective premise = new BinaryConnective(ConnectiveType.AND, x_eq_y, y_eq_z);
-        BinaryConnective implies = new BinaryConnective(ConnectiveType.IMPLIES, premise, x_neq_q);
+        BinaryCondition x_eq_y = new BinaryCondition(ConditionType.EQUAL, x, zero);
+        BinaryCondition y_eq_z = new BinaryCondition(ConditionType.EQUAL, y, zero);
+        BinaryCondition x_eq_z = new BinaryCondition(ConditionType.EQUAL, z, zero);
+        BinaryConnective and = new BinaryConnective(ConnectiveType.AND, x_eq_y, y_eq_z);
+        and = new BinaryConnective(ConnectiveType.AND, and, x_eq_z);
 
-        String counterExample = visitor.getCounterExample(implies);
+        String counterExample = visitor.getCounterExample(and);
         Map<String, Integer> symbolToVal = parseCounterexample(counterExample);
-        assertEquals(symbolToVal.get("x"), symbolToVal.get("y"));
-        assertEquals(symbolToVal.get("y"), symbolToVal.get("z"));
-        assertNotEquals(symbolToVal.get("x"), symbolToVal.get("z"));
+
+        boolean expected = symbolToVal.get("x") != 0
+                        || symbolToVal.get("y") != 0
+                        || symbolToVal.get("z") != 0;
+        assertTrue(expected);
     }
 
     @Test
