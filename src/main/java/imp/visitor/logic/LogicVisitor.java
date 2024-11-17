@@ -1,6 +1,7 @@
 package imp.visitor.logic;
 
 import imp.condition.BinaryConnective;
+import imp.condition.Boolean;
 import imp.condition.Condition;
 import imp.condition.ConnectiveType;
 import imp.condition.UnaryConnective;
@@ -18,16 +19,24 @@ public class LogicVisitor extends StatementVisitor
 
 
     // saves copy of q to avoid mutating original obj
-    public LogicVisitor(Condition q) 
-    { 
+    public LogicVisitor(Condition q)
+    {
         CondCopyVisitor copier = new CondCopyVisitor();
         q.accept(copier);
         this.result = copier.result;
     }
+    public LogicVisitor() { }
+
 
     @Override
     public void visit(Assignment s)
     {
+        if(result == null)
+        {
+            result = new Boolean(true);
+            return;
+        }
+
         ConditionReplacementVisitor replacer = new ConditionReplacementVisitor(s.v.symbol, s.e);
         result.accept(replacer); // mutates result
     }
@@ -35,6 +44,12 @@ public class LogicVisitor extends StatementVisitor
     @Override
     public void visit(Composition s)
     {
+        if(result == null)
+        {
+            result = new Boolean(true);
+            return;
+        }
+
         s.after.accept(this);
         // q = wp2
         s.before.accept(this);
@@ -43,6 +58,12 @@ public class LogicVisitor extends StatementVisitor
     @Override
     public void visit(If s)
     {
+        if(result == null)
+        {
+            result = new Boolean(true);
+            return;
+        }
+
         // save q
         Condition orig;
         CondCopyVisitor copier = new CondCopyVisitor();
