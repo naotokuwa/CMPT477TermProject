@@ -8,7 +8,6 @@ import imp.visitor.serialize.ExpressionSerializeVisitor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 public class ExpressionReplacementVisitorTest {
     private void checkSerializationResult(Expression expression, String expectedResult){
