@@ -8,8 +8,6 @@ import imp.condition.Condition;
 import imp.condition.UnaryConnective;
 import imp.expression.Expression;
 import imp.visitor.ConditionVisitor;
-import imp.visitor.replacement.ExprCopyVisitor;
-import imp.expression.Expression;
 
 
 public class CondCopyVisitor extends ConditionVisitor

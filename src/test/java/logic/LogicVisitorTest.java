@@ -97,7 +97,6 @@ public class LogicVisitorTest
         // more than one occurence
         // x := 1
         // {x <= x}
-        VariableExpression x2 = new VariableExpression("x");
         BinaryCondition q2 = new BinaryCondition(ConditionType.LE, x, x);
         solver = new LogicVisitor(q2);
         x_eq_1.accept(solver);
