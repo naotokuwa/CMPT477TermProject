@@ -7,7 +7,7 @@
 
 method TrajectoryValid1(a: int, b: int) returns (trajectory: int)
   ensures a == b ==> trajectory == a
-  ensures a != b ==> trajectory == b + (b - a)
+  ensures !(a == b) ==> trajectory == b + (b + (-1 * a))
 {
   if ( a == b ) {
     trajectory := b;
