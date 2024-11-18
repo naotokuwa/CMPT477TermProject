@@ -14,9 +14,13 @@ public class VerifierNorTest {
 	private Statement program;
 	
 	private String expectedSerializedProgram(){
-	  String expected = "if ( a == 0 ) AND ( b == 0 )\n";
+	  String expected = "if a == 0\n";
     expected += "then\n";
-    expected += "  nor := 1\n";
+    expected += "  if b == 0\n";
+    expected += "  then\n";
+    expected += "    nor := 1\n";
+    expected += "  else\n";
+    expected += "    nor := 0\n";
     expected += "else\n";
     expected += "  nor := 0";
 	  return expected;
@@ -24,30 +28,35 @@ public class VerifierNorTest {
 	
 	private Statement createProgram(){
 
-    // Condition Inner 1
+
+    // -- Outer If Statement -- 
+    // Outer Condition 
     VariableExpression a1 = new VariableExpression("a");
     IntegerExpression zero1 = new IntegerExpression(0);
-    Condition c1 = new BinaryCondition(ConditionType.EQUAL, a1, zero1);
+    Condition outerCondition = new BinaryCondition(ConditionType.EQUAL, a1, zero1);
 
-    // Condition Inner 2
+    // -- Outer Then / Inner If Statement --
+    // innerCondition
     VariableExpression b1 = new VariableExpression("b");
     IntegerExpression zero2 = new IntegerExpression(0);
-    Condition c2 = new BinaryCondition(ConditionType.EQUAL, b1, zero2);
-
-    Condition condition = new BinaryConnective(ConnectiveType.AND, c1, c2);
-
-    // Then Block
+    Condition innerCondition = new BinaryCondition(ConditionType.EQUAL, b1, zero2);
+    // innerThenBlock
     VariableExpression nor1 = new VariableExpression("nor");
     IntegerExpression one1 = new IntegerExpression(1);
-    Assignment thenBlock = new Assignment(nor1, one1);
-
-    // Else Block 
+    Assignment innerThenBlock = new Assignment(nor1, one1);
+    // innerElseBlock
     VariableExpression nor2 = new VariableExpression("nor");
     IntegerExpression zero3 = new IntegerExpression(0);
-    Assignment elseBlock = new Assignment(nor2, zero3);
+    Assignment innerElseBlock = new Assignment(nor2, zero3);
 
-    // If Statement 
-    Statement program = new If(condition, thenBlock, elseBlock);
+    Statement innerIfStatement = new If(innerCondition, innerThenBlock, innerElseBlock);
+
+    // Outer Else 
+    VariableExpression nor3 = new VariableExpression("nor");
+    IntegerExpression zero4 = new IntegerExpression(0);
+    Assignment outerElseBlock = new Assignment(nor3, zero4);
+
+    Statement program = new If(outerCondition, innerIfStatement, outerElseBlock);
 
 		// Verify program serialization
 		program.accept(visitor);
