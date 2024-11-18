@@ -80,8 +80,8 @@ public class VerifierAbsTest {
                                   new VariableExpression("y"));
 
         postcondition.accept(conditionSerializer);
-        String expectedSerializedPre = "0 <= y";
-        assertEquals(expectedSerializedPre, conditionSerializer.result);
+        String expectedSerializedPost = "0 <= y";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         assertTrue(verifier.verify(validProgram, postcondition));
     }
@@ -118,8 +118,8 @@ public class VerifierAbsTest {
                                   new IntegerExpression(0));
 
         postcondition.accept(conditionSerializer);
-        String expectedSerializedPre = "y <= 0";
-        assertEquals(expectedSerializedPre, conditionSerializer.result);
+        String expectedSerializedPost = "y <= 0";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         assertFalse(verifier.verify(validProgram, postcondition));
 
