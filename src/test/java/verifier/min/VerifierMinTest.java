@@ -3,6 +3,7 @@ package verifier.min;
 import imp.expression.*;
 import imp.statement.*;
 import imp.condition.*;
+import imp.visitor.serialize.ConditionSerializeVisitor;
 import imp.visitor.serialize.StatementSerializeVisitor;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VerifierMinTest {
-    private StatementSerializeVisitor visitor;
+    private StatementSerializeVisitor programSerializer;
+    private ConditionSerializeVisitor conditionSerializer;
     private Statement program;
     private Verifier verifier;
 
@@ -62,8 +64,8 @@ public class VerifierMinTest {
         Statement program = new Composition(firstLine, ifStatement);
 
         // Verify program serialization
-        program.accept(visitor);
-        String result = visitor.result;
+        program.accept(programSerializer);
+        String result = programSerializer.result;
         String expected = expectedSerializedProgram();
 
         assertEquals(expected, result);
@@ -72,13 +74,14 @@ public class VerifierMinTest {
     }
 
     @BeforeEach public void setUp() {
-        visitor = new StatementSerializeVisitor();
+        programSerializer = new StatementSerializeVisitor();
+        conditionSerializer = new ConditionSerializeVisitor();
         this.program = createProgram();
         verifier = new Verifier();
     }
     
     @Test
-    void MinValidNoPrecondition(){
+    void MinValidNoPrecondition() {
         // Postcondition:
         // minVal == x || minVal == y
         // minVal <= x && minVal <= y
@@ -92,6 +95,11 @@ public class VerifierMinTest {
         BinaryCondition minVal_le_y = new BinaryCondition(ConditionType.LE, minVal, y);
         BinaryConnective condition2 = new BinaryConnective(ConnectiveType.AND, minVal_le_x, minVal_le_y);
         BinaryConnective postcondition = new BinaryConnective(ConnectiveType.AND, condition1, condition2);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPre =
+                "( ( minVal == x ) OR ( minVal == y ) ) AND ( ( minVal <= x ) AND ( minVal <= y ) )";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
 
         boolean isValid = verifier.verify(program, postcondition);
         assertTrue(isValid);
@@ -109,6 +117,16 @@ public class VerifierMinTest {
         BinaryCondition y_eq_minVal = new BinaryCondition(ConditionType.EQUAL, minVal, y);
         BinaryConnective postcondition = new BinaryConnective(ConnectiveType.AND, x_eq_minVal, y_eq_minVal);
 
+        precondition.accept(conditionSerializer);
+        String serializedPre = conditionSerializer.result;
+        postcondition.accept(conditionSerializer);
+        String serializedPost = conditionSerializer.result;
+        String expectedSerializedPre = "x == y";
+        String expectedSerializedPost = "( minVal == x ) AND ( minVal == y )";
+
+        assertEquals(expectedSerializedPre, serializedPre);
+        assertEquals(expectedSerializedPost, serializedPost);
+
         boolean isValid = verifier.verify(program, precondition, postcondition);
         assertTrue(isValid);
     }
@@ -125,6 +143,11 @@ public class VerifierMinTest {
 
         boolean isValid = verifier.verify(program, postcondition);
         assertFalse(isValid);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPre =
+                "( minVal == x ) AND ( minVal == y )";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
 
         /* Test counterexamples */
 
@@ -149,6 +172,16 @@ public class VerifierMinTest {
 
         boolean isValid = verifier.verify(program, precondition, postcondition);
         assertFalse(isValid);
+
+        precondition.accept(conditionSerializer);
+        String serializedPre = conditionSerializer.result;
+        postcondition.accept(conditionSerializer);
+        String serializedPost = conditionSerializer.result;
+        String expectedSerializedPre = "x <= 0";
+        String expectedSerializedPost = "x == minVal";
+
+        assertEquals(expectedSerializedPre, serializedPre);
+        assertEquals(expectedSerializedPost, serializedPost);
 
         /* Test counterexamples */
 

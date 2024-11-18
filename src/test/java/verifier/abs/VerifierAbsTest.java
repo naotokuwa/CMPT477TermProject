@@ -3,6 +3,7 @@ package verifier.abs;
 import imp.expression.*;
 import imp.statement.*;
 import imp.condition.*;
+import imp.visitor.serialize.ConditionSerializeVisitor;
 import imp.visitor.serialize.StatementSerializeVisitor;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VerifierAbsTest {
-    private StatementSerializeVisitor visitor;
+    private StatementSerializeVisitor programSerializer;
+    private ConditionSerializeVisitor conditionSerializer;
     private Statement program;
     private Verifier verifier;
 
@@ -51,8 +53,8 @@ public class VerifierAbsTest {
       Statement program = new If(condition, thenBlock, elseBlock);
 
       // Verify Program Serialization
-      program.accept(visitor);
-      String result = visitor.result;
+      program.accept(programSerializer);
+      String result = programSerializer.result;
       String expected = expectedSerializedProgram();
 
       assertEquals(expected, result);
@@ -61,7 +63,8 @@ public class VerifierAbsTest {
     }
 
     @BeforeEach public void setUp() {
-      visitor = new StatementSerializeVisitor();
+      programSerializer = new StatementSerializeVisitor();
+      conditionSerializer = new ConditionSerializeVisitor();
       this.program = createProgram();
       verifier = new Verifier();
     }
@@ -72,6 +75,10 @@ public class VerifierAbsTest {
         Condition postcondition = new BinaryCondition(ConditionType.LE,
                                   new IntegerExpression(0),
                                   new VariableExpression("y"));
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPre = "0 <= y";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
 
         assertTrue(verifier.verify(program, postcondition));
     }
@@ -87,6 +94,16 @@ public class VerifierAbsTest {
                                   new IntegerExpression(0),
                                   new VariableExpression("y"));
 
+        precondition.accept(conditionSerializer);
+        String serializedPre = conditionSerializer.result;
+        postcondition.accept(conditionSerializer);
+        String serializedPost = conditionSerializer.result;
+        String expectedSerializedPre = "x <= 0";
+        String expectedSerializedPost = "0 <= y";
+
+        assertEquals(expectedSerializedPre, serializedPre);
+        assertEquals(expectedSerializedPost, serializedPost);
+
         assertTrue(verifier.verify(program, precondition, postcondition));
     }
 
@@ -96,6 +113,10 @@ public class VerifierAbsTest {
         Condition postcondition = new BinaryCondition(ConditionType.LE,
                                   new VariableExpression("y"),
                                   new IntegerExpression(0));
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPre = "y <= 0";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
 
         assertFalse(verifier.verify(program, postcondition));
 
@@ -121,6 +142,16 @@ public class VerifierAbsTest {
                                   new IntegerExpression(0));
 
         assertFalse(verifier.verify(program, precondition, postcondition));
+
+        precondition.accept(conditionSerializer);
+        String serializedPre = conditionSerializer.result;
+        postcondition.accept(conditionSerializer);
+        String serializedPost = conditionSerializer.result;
+        String expectedSerializedPre = "x == -1";
+        String expectedSerializedPost = "y <= 0";
+
+        assertEquals(expectedSerializedPre, serializedPre);
+        assertEquals(expectedSerializedPost, serializedPost);
 
         /* Test counterexamples */
 
