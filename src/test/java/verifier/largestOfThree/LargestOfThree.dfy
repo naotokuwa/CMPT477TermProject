@@ -1,6 +1,6 @@
 // Given three integer inputs, find the largest one and return it. 
 method LargestOfThreeValid1 (x: int, y: int, z: int ) returns (largest :int)
-  ensures largest >= x && largest >= y && largest >= z
+  ensures x <= largest && y <= largest && z <= largest
 {
   largest := x;
 
