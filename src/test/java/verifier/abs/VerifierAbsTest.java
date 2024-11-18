@@ -17,12 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class VerifierAbsTest {
     private StatementSerializeVisitor programSerializer;
     private ConditionSerializeVisitor conditionSerializer;
-    private Statement program;
+    private Statement validProgram;
+    private Statement invalidProgram;
     private Verifier verifier;
 
     // Expected Serialized Abs IMP Program
-    private String expectedSerializedProgram() {
-      String expected = "if x <= 0\n";
+    private String expectedSerializedProgram(boolean valid) {
+      String expected = valid ? "if x <= 0\n" : "if x == 0\n";
       expected += "then\n";
       expected += "  y := x * -1\n";
       expected += "else\n";
@@ -30,12 +31,13 @@ public class VerifierAbsTest {
       return expected;
     }
 
-    private Statement createProgram() {
+    private Statement createProgram(boolean valid) {
 
       // IF Condition
       Expression x1 = new VariableExpression("x");
       Expression zero = new IntegerExpression(0);
-      Condition condition = new BinaryCondition(ConditionType.LE, x1, zero);
+      Condition condition = valid ? new BinaryCondition(ConditionType.LE, x1, zero)
+                                  : new BinaryCondition(ConditionType.EQUAL, x1, zero);
 
       // THEN Block 
       VariableExpression y1 = new VariableExpression("y");
@@ -55,7 +57,7 @@ public class VerifierAbsTest {
       // Verify Program Serialization
       program.accept(programSerializer);
       String result = programSerializer.result;
-      String expected = expectedSerializedProgram();
+      String expected = expectedSerializedProgram(valid);
 
       assertEquals(expected, result);
 
@@ -65,7 +67,8 @@ public class VerifierAbsTest {
     @BeforeEach public void setUp() {
       programSerializer = new StatementSerializeVisitor();
       conditionSerializer = new ConditionSerializeVisitor();
-      this.program = createProgram();
+      this.validProgram = createProgram(true);
+      this.invalidProgram = createProgram(false);
       verifier = new Verifier();
     }
     
@@ -80,7 +83,7 @@ public class VerifierAbsTest {
         String expectedSerializedPre = "0 <= y";
         assertEquals(expectedSerializedPre, conditionSerializer.result);
 
-        assertTrue(verifier.verify(program, postcondition));
+        assertTrue(verifier.verify(validProgram, postcondition));
     }
 
     @Test
@@ -104,7 +107,7 @@ public class VerifierAbsTest {
         assertEquals(expectedSerializedPre, serializedPre);
         assertEquals(expectedSerializedPost, serializedPost);
 
-        assertTrue(verifier.verify(program, precondition, postcondition));
+        assertTrue(verifier.verify(validProgram, precondition, postcondition));
     }
 
     @Test
@@ -118,7 +121,7 @@ public class VerifierAbsTest {
         String expectedSerializedPre = "y <= 0";
         assertEquals(expectedSerializedPre, conditionSerializer.result);
 
-        assertFalse(verifier.verify(program, postcondition));
+        assertFalse(verifier.verify(validProgram, postcondition));
 
         /* Test counterexamples */
 
@@ -141,7 +144,7 @@ public class VerifierAbsTest {
                                   new VariableExpression("y"),
                                   new IntegerExpression(0));
 
-        assertFalse(verifier.verify(program, precondition, postcondition));
+        assertFalse(verifier.verify(validProgram, precondition, postcondition));
 
         precondition.accept(conditionSerializer);
         String serializedPre = conditionSerializer.result;
@@ -161,5 +164,26 @@ public class VerifierAbsTest {
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
         assertEquals(-1, map.get("x"));
+    }
+
+    @Test
+    public void InvalidProgramValidSpec() {
+        // Same postcondition as AbsValidNoPrecondition() but with an invalid program
+        // Postcondition: 0 <= y
+        Condition postcondition = new BinaryCondition(ConditionType.LE,
+                new IntegerExpression(0),
+                new VariableExpression("y"));
+
+        boolean isValid = verifier.verify(invalidProgram, postcondition);
+        assertFalse(isValid);
+
+        /* Test counterexamples */
+
+        // Testing strings is difficult since z3 can return different values
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertTrue(map.get("x") < 0);
     }
 }
