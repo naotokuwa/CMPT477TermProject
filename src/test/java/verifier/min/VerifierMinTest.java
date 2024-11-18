@@ -134,9 +134,9 @@ public class VerifierMinTest {
         assertFalse(isValid);
 
         postcondition.accept(conditionSerializer);
-        String expectedSerializedPre =
+        String expectedSerializedPost =
                 "( minVal == x ) AND ( minVal == y )";
-        assertEquals(expectedSerializedPre, conditionSerializer.result);
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         /* Test counterexamples */
 
@@ -218,9 +218,9 @@ public class VerifierMinTest {
         BinaryConnective postcondition = new BinaryConnective(ConnectiveType.AND, condition1, condition2);
 
         postcondition.accept(conditionSerializer);
-        String expectedSerializedPre =
+        String expectedSerializedPost =
                 "( ( minVal == x ) OR ( minVal == y ) ) AND ( ( minVal <= x ) AND ( minVal <= y ) )";
-        assertEquals(expectedSerializedPre, conditionSerializer.result);
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         return postcondition;
     }
