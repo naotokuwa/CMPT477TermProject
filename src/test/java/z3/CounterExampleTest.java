@@ -95,4 +95,52 @@ public class CounterExampleTest {
 
         assertEquals(expected, stringOutput);
     }
+
+    @Test
+    public void testStringOutputNegative() {
+        // Test Scenario: NOT( x = 1 ) AND NOT( y = -1 )
+        /*
+        * Forces z3 output to be:
+        * (define-fun y () Int
+        *   (- 1))
+        * (define-fun x () Int
+        *   1)
+        **/
+        VariableExpression x = new VariableExpression("x");
+        IntegerExpression one = new IntegerExpression(1);
+        VariableExpression y = new VariableExpression("y");
+        IntegerExpression negative_one = new IntegerExpression(-1);
+        BinaryCondition x_eq = new BinaryCondition(ConditionType.EQUAL, x, one);
+        BinaryCondition y_eq = new BinaryCondition(ConditionType.EQUAL, y, negative_one);
+        UnaryConnective not_x = new UnaryConnective(ConnectiveType.NOT, x_eq);
+        UnaryConnective not_y = new UnaryConnective(ConnectiveType.NOT, y_eq);
+        BinaryConnective testCondition = new BinaryConnective(ConnectiveType.AND, not_x, not_y);
+
+        String stringOutput = visitor.getCounterexampleAsString(testCondition);
+
+        String expected = """
+                Counterexample:
+                y = -1
+                x = 1
+                """;
+
+        assertEquals(expected, stringOutput);
+    }
+
+    @Test
+    public void testMultipleVariablesNegative() {
+        VariableExpression x = new VariableExpression("x");
+        IntegerExpression one = new IntegerExpression(1);
+        VariableExpression y = new VariableExpression("y");
+        IntegerExpression negative_one = new IntegerExpression(-1);
+        BinaryCondition x_eq = new BinaryCondition(ConditionType.EQUAL, x, one);
+        BinaryCondition y_eq = new BinaryCondition(ConditionType.EQUAL, y, negative_one);
+        UnaryConnective not_x = new UnaryConnective(ConnectiveType.NOT, x_eq);
+        UnaryConnective not_y = new UnaryConnective(ConnectiveType.NOT, y_eq);
+        BinaryConnective testCondition = new BinaryConnective(ConnectiveType.AND, not_x, not_y);
+
+        var map = visitor.getCounterexampleAsMap(testCondition);
+        assertEquals(map.get("x"), 1);
+        assertEquals(map.get("y"), -1);
+    }
 }
