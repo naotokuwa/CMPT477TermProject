@@ -1,4 +1,4 @@
-# CMPT477TermProject
+# CMPT477 Term Project
 A formal program verification tool for the simplified (loop-free) IMP (Imperative Programming)
 language leveraging Z3 for SMT formula validation.
 
@@ -7,6 +7,21 @@ language leveraging Z3 for SMT formula validation.
 - Lucas, Joel
 - Ly, Raymond
 - Wang, Andy
+
+## Contents
+- [CMPT477 Term Project](#cmpt477-term-project)
+    * [IMP Grammar](#imp-grammar)
+    * [Logic Grammar](#logic-grammar)
+    * [Basic Example](#basic-example)
+- [Detailed Usage](#detailed-usage)
+    * [Creating a Program](#creating-a-program)
+        + [Expressions](#expressions)
+        + [Conditions](#conditions)
+        + [Statements](#statements)
+    * [Creating pre- / post-conditions](#creating-pre---post-conditions)
+        + [Conditions (only for use in pre- / post-conditions)](#conditions-only-for-use-in-pre---post-conditions)
+    * [Verifying a program](#verifying-a-program)
+    * [Getting a counterexample](#getting-a-counterexample)
 
 ## IMP Grammar
 Our verifier accepts loop-free IMP program according to the following grammar:
