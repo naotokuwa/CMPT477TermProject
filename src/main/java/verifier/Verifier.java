@@ -48,29 +48,44 @@ public class Verifier {
     }
 
     /**
-     * @return a counterexample as a map from symbols to values
+     * @return a counterexample as a map from symbols to values if the last verified program is invalid,
+     * otherwise an empty map
+     * @throws CounterexampleCallOrderException if called before calling verify()
      */
     public Map<String, Integer> getCounterexampleMap() {
+        if (validityCondition == null) {
+            throw new CounterexampleCallOrderException("called getCounterexampleMap() before calling verify()");
+        }
         return z3Visitor.getCounterexampleAsMap(validityCondition);
     }
 
     /**
-     * @return a counterexample as a simple string
+     * @return a counterexample as a simple string if the last verified program is invalid,
+     * otherwise an empty string
+     * @throws CounterexampleCallOrderException if called before calling verify()
      * ex. x = 0
      *     y = -1
      */
     public String getCounterexampleString() {
+        if (validityCondition == null) {
+            throw new CounterexampleCallOrderException("called getCounterexampleString() before calling verify()");
+        }
         return z3Visitor.getCounterexampleAsString(validityCondition);
     }
 
     /**
-     * @return a counterexample as a z3 string
+     * @return a counterexample as a z3 string if the last verified program is invalid,
+     * otherwise an empty string
+     * @throws CounterexampleCallOrderException if called before calling verify()
      *  ex. (define-fun x () Int
      *       0)
      *      (define-fun y () Int
      *       (- 1))
      */
     public String getCounterexampleRaw() {
+        if (validityCondition == null) {
+            throw new CounterexampleCallOrderException("called getCounterexampleRaw() before calling verify()");
+        }
         return z3Visitor.getCounterexampleRaw(validityCondition);
     }
 }
