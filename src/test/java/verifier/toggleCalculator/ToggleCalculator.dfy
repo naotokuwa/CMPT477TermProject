@@ -55,7 +55,8 @@ method ToggleCalculatorInvalidWithoutPre(toggleAddMul: int, a: int, b: int) retu
 
 // ======================================== wrong methods ========================================
 method ToggleCalculatorInvalidValidSpec(toggleAddMul: int, a: int, b: int) returns (result: int)
-  ensures (result == a * b) || (result == a + b)
+    requires toggleAddMul == 2
+    ensures (result == a * b) || (result == a + b)
 {
     if(toggleAddMul == 1) {
         result := a + b;

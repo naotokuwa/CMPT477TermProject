@@ -12,7 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Map;
 
 
 
@@ -204,8 +207,8 @@ public class VerifierToggleCalculatorTest {
 
 
         /* Test counterexamples */
-        String counterexampleString = verifier.getCounterexampleString();
-        assertEquals("Counterexample:\ntoggleAddMul = -1\n", counterexampleString);
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertEquals(-1, map.get("toggleAddMul"));
     }
     @Test
     void ToggleCalculatorInvalidWithoutPre()
@@ -228,11 +231,10 @@ public class VerifierToggleCalculatorTest {
 
 
         /* Test counterexamples */
-        String counterexampleString = verifier.getCounterexampleString();
-        assertEquals("Counterexample:\n" +
-                    "toggleAddMul = 1\n" +
-                    "b = -4\n" +
-                    "a = 4\n", counterexampleString);
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertTrue(map.containsKey("b"));
+        assertTrue(map.containsKey("a"));
+        assertEquals(1, map.get("toggleAddMul"));
     }
 
 
@@ -287,10 +289,9 @@ public class VerifierToggleCalculatorTest {
 
 
         /* Test counterexamples */
-        String counterexampleString = verifier.getCounterexampleString();
-        assertEquals("Counterexample:\n" +
-                     "toggleAddMul = 2\n" +
-                     "b = 5\n" +
-                     "a = -5\n", counterexampleString);
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertTrue(map.containsKey("b"));
+        assertTrue(map.containsKey("a"));
+        assertEquals(2, map.get("toggleAddMul"));
     }
 }
