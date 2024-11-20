@@ -112,8 +112,8 @@ example can be found in `VerifierAbsTest::createProgram()`.
 
 ### Statements
 **Assignment**: `var assign = new Assignment(x, zero)`  
-**Composition**: `var composition = new Composition(statement, statement)`  
-**IfElse**: `var ifElse = new If(condition, statement, statement)`
+**Composition**: `var composition = new Composition(beforeStatement, afterStatement)`  
+**IfElse**: `var ifElse = new If(condition, thenStatement, elseStatement)`
 
 ## Creating pre- / post-conditions
 To create pre- / post-conditions, create an AST following the [Logic Grammar](#logic-grammar). Same
