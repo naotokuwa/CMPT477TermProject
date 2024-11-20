@@ -99,8 +99,10 @@ public class ConditionZ3Visitor extends ConditionVisitor {
         solver.add(negation);
         Status status = solver.check();
 
+        // The formula is valid (no counterexample)
         if (status == Status.UNSATISFIABLE) {
-            return "";
+            cachedModel = "";
+            return cachedModel;
         }
 
         cachedModel = solver.getModel().toString();
