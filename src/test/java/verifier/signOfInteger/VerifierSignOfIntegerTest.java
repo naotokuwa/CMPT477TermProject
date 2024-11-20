@@ -144,13 +144,7 @@ public class VerifierSignOfIntegerTest {
         Expression x = new VariableExpression("x");
         Expression zero = new IntegerExpression(0);
         Condition condition = new BinaryCondition(ConditionType.LE, x, zero);
-        condition = new UnaryConnective(ConnectiveType.NOT, condition);
-
-        // Create NOT(x == 0)
-        Condition xIsZero = createXIsZero();
-        Condition notEqual = new UnaryConnective(ConnectiveType.NOT, xIsZero);
-
-        return new BinaryConnective(ConnectiveType.AND, condition, notEqual);
+        return new UnaryConnective(ConnectiveType.NOT, condition);
     }
 
     private Condition createYIsResult(int expectedResult){
@@ -165,7 +159,7 @@ public class VerifierSignOfIntegerTest {
         Condition preCondition = createXGreaterThanZero();
         preCondition.accept(conditionSerializer);
 
-        String expectedPre = "( NOT( x <= 0 ) ) AND ( NOT( x == 0 ) )";
+        String expectedPre = "NOT( x <= 0 )";
         String preConditionStr = conditionSerializer.result;
 
         assertEquals(preConditionStr, expectedPre);
@@ -253,7 +247,7 @@ public class VerifierSignOfIntegerTest {
         String postConditionStr = conditionSerializer.result;
 
         // Expected string result
-        String firstImplyStrExpected = "( ( NOT( x <= 0 ) ) AND ( NOT( x == 0 ) ) ) ==> ( y == 1 )";
+        String firstImplyStrExpected = "( NOT( x <= 0 ) ) ==> ( y == 1 )";
         String secondImplyStrExpected = "( x == 0 ) ==> ( y == 0 )";
         String thirdImplyStrExpected = "( ( x <= 0 ) AND ( NOT( x == 0 ) ) ) ==> ( y == -1 )";
         String firstAnd = String.format("( %s ) AND ( %s )", firstImplyStrExpected, secondImplyStrExpected);
@@ -337,7 +331,7 @@ public class VerifierSignOfIntegerTest {
         String postConditionStr = conditionSerializer.result;
 
         // Expected string result
-        String firstImplyStrExpected = "( ( NOT( x <= 0 ) ) AND ( NOT( x == 0 ) ) ) ==> ( y == 1 )";
+        String firstImplyStrExpected = "( NOT( x <= 0 ) ) ==> ( y == 1 )";
         String secondImplyStrExpected = "( x == 0 ) ==> ( y == 0 )";
         String thirdImplyStrExpected = "( ( x <= 0 ) AND ( NOT( x == 0 ) ) ) ==> ( y == -1 )";
         String firstAnd = String.format("( %s ) AND ( %s )", firstImplyStrExpected, secondImplyStrExpected);
