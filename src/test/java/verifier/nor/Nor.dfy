@@ -5,20 +5,20 @@
 
 // 1 == true, 2 == false
 method NorValid1(a: int, b: int) returns (nor: int)
-  requires a == 1 || a == 0
-  requires b == 1 || b == 0
-  ensures a == 0 && b == 0 ==> nor == 1
-  ensures a == 1 && b == 0 ==> nor == 0
-  ensures a == 0 && b == 1 ==> nor == 0
-  ensures a == 1 && b == 1 ==> nor == 0
+    requires a == 1 || a == 0
+    requires b == 1 || b == 0
+    ensures a == 0 && b == 0 ==> nor == 1
+    ensures a == 1 && b == 0 ==> nor == 0
+    ensures a == 0 && b == 1 ==> nor == 0
+    ensures a == 1 && b == 1 ==> nor == 0
 {
-  if( a == 0 ) {
-    if ( b == 0 ) {
-      nor := 1;
+    if( a == 0 ) {
+        if ( b == 0 ) {
+            nor := 1;
+        } else {
+            nor := 0;
+        }
     } else {
-      nor := 0;
+        nor := 0;
     }
-  } else {
-    nor := 0;
-  }
 }
