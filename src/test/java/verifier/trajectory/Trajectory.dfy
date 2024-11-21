@@ -6,13 +6,13 @@
 // given a!=b, return b + b-a
 
 method TrajectoryValid1(a: int, b: int) returns (trajectory: int)
-  ensures a == b ==> trajectory == a
-  ensures !(a == b) ==> trajectory == b + (b + (-1 * a))
+	ensures a == b ==> trajectory == a
+	ensures !(a == b) ==> trajectory == b + (b + (-1 * a))
 {
-  if ( a == b ) {
-    trajectory := b;
-  } else {
-    var changeInTrajectory: int := ( a * -1 ) + b;
-    trajectory := b + changeInTrajectory;
-  }
+	if ( a == b ) {
+		trajectory := b;
+	} else {
+		var changeInTrajectory: int := ( a * -1 ) + b;
+		trajectory := b + changeInTrajectory;
+	}
 }
