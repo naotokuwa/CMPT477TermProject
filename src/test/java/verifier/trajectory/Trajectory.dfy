@@ -1,9 +1,8 @@
-// Lets define a way to calculate Trajectory given two points. 
-// Let a point be a pair of integers (a,b) which is either has neutral or changing tragectory. 
-// If the trajectory is neutral, then the output is the same as the inputs. 
-// given a==b, return b. 
-// If the trajectory is changing, then the output is the change added to the second point. 
-// given a!=b, return b + b-a
+// Lets define Trajectory as the arithemetic growth of a variable. 
+// Let a be the first value of the variable, and b be the second value of the variable. 
+// If the variable stays the same value, (a==b), then there is no growth.
+// If the variable has a different value, (a!=b), then there is growth, equal to b-a.  
+// The trajectory is the next value of the variable, equal to b + (b-a).
 
 method TrajectoryValid1(a: int, b: int) returns (trajectory: int)
 	ensures a == b ==> trajectory == a
