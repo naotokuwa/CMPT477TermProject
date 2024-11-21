@@ -6,7 +6,6 @@ import imp.expression.BinaryExpression;
 import imp.expression.Expression;
 import imp.expression.ExpressionType;
 import imp.visitor.replacement.ExprCopyVisitor;
-import imp.visitor.ExpressionVisitor;
 import imp.visitor.serialize.ExpressionSerializeVisitor;
 import org.junit.jupiter.api.Test;
 

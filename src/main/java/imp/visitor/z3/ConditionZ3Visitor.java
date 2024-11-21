@@ -5,11 +5,19 @@ import imp.condition.*;
 import imp.condition.Boolean;
 import imp.visitor.ConditionVisitor;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Creates a z3 object representing a Condition.
  */
 public class ConditionZ3Visitor extends ConditionVisitor {
     private final Context ctx;
+    private Condition oldCondition;
+    private String cachedModel;
     public BoolExpr result;
 
     /**
@@ -27,6 +35,78 @@ public class ConditionZ3Visitor extends ConditionVisitor {
     public BoolExpr getResult(Condition c) {
         c.accept(this);
         return result;
+    }
+
+    /**
+     * @param condition The condition to check
+     * @return The validity of the given condition
+     */
+    public boolean checkValidity(Condition condition) {
+        condition.accept(this);
+        return isValid(result);
+    }
+
+    /**
+     * @param condition The condition used to generate the counterexample
+     * @return A string representation of a counterexample if the condition
+     * is invalid, otherwise an empty string
+     */
+    public String getCounterexampleAsString(Condition condition) {
+        String z3Output = getCounterexampleRaw(condition);
+
+        if (z3Output.equals("")) {
+            return "";
+        }
+
+        String regex = "\\(define-fun\\s+(\\w+).*\n\\s+[(]?([\\w\\s-]+)[)]?\\)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(z3Output);
+        StringBuilder counterExample = new StringBuilder("Counterexample:\n");
+        while (matcher.find()) {
+            String symbol = matcher.group(1);
+            String value = matcher.group(2).replaceAll("\\s", "");
+            counterExample.append(symbol).append(" = ").append(value).append("\n");
+        }
+
+        return counterExample.toString();
+    }
+
+    /**
+     * @param condition The condition used to generate the counterexample
+     * @return A map representation of a counterexample if the condition
+     * is invalid, otherwise an empty map
+     */
+    public Map<String, Integer> getCounterexampleAsMap(Condition condition) {
+        String z3Output = getCounterexampleAsString(condition);
+        if (z3Output.equals("")) {
+            return new HashMap<>();
+        }
+        return z3StringToMap(z3Output);
+    }
+
+    public String getCounterexampleRaw(Condition condition) {
+        // Cache to avoid having to repeatedly invoke z3 and the visitor upon
+        // repeated calls to getCounterexample methods
+        if (condition == oldCondition) {
+            return cachedModel;
+        } else {
+            oldCondition = condition;
+        }
+
+        Solver solver = ctx.mkSolver();
+        condition.accept(this);
+        BoolExpr negation = ctx.mkNot(result);
+        solver.add(negation);
+        Status status = solver.check();
+
+        // The formula is valid (no counterexample)
+        if (status == Status.UNSATISFIABLE) {
+            cachedModel = "";
+            return cachedModel;
+        }
+
+        cachedModel = solver.getModel().toString();
+        return cachedModel;
     }
 
     @Override
@@ -70,19 +150,29 @@ public class ConditionZ3Visitor extends ConditionVisitor {
         }
     }
 
-    /**
-     * @param condition The condition to check
-     * @return The validity of the given condition
-     */
-    public boolean checkValidity(Condition condition) {
-        condition.accept(this);
-        return isValid(result);
-    }
-
     private boolean isValid(BoolExpr formula) {
         Solver solver = ctx.mkSolver();
         BoolExpr negation = ctx.mkNot(formula);
         solver.add(negation);
         return solver.check() == Status.UNSATISFIABLE;
+    }
+
+    /**
+     * @param input The string representation given by getCounterexampleAsString()
+     * @return A map from symbols to values
+     */
+    private Map<String, Integer> z3StringToMap(String input) {
+        Map<String, Integer> symbolToVal = new HashMap<>();
+        Scanner scanner = new Scanner(input);
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            String[] tokens = line.split("=");
+            if (tokens.length == 2) {
+                String symbol = tokens[0].trim();
+                int val = Integer.parseInt(tokens[1].trim());
+                symbolToVal.put(symbol, val);
+            }
+        }
+        return symbolToVal;
     }
 }
