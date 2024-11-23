@@ -3,17 +3,25 @@ package verifier.nor;
 import imp.expression.*;
 import imp.statement.*;
 import imp.condition.*;
+import imp.visitor.serialize.ConditionSerializeVisitor;
 import imp.visitor.serialize.StatementSerializeVisitor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import verifier.Verifier;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VerifierNorTest {
-    private StatementSerializeVisitor visitor;
-    private Statement program;
+    private StatementSerializeVisitor programSerializer;
+    private ConditionSerializeVisitor conditionSerializer;
+    private Statement validProgram;
+    private Statement invalidProgram;
+    private Verifier verifier;
 
-    private String expectedSerializedProgram() {
+    private String expectedSerializedProgram(boolean valid) {
         String expected = "if a == 0\n";
         expected += "then\n";
         expected += "  if b == 0\n";
@@ -22,11 +30,11 @@ public class VerifierNorTest {
         expected += "  else\n";
         expected += "    nor := 0\n";
         expected += "else\n";
-        expected += "  nor := 0";
+        expected += valid ? "  nor := 0" : "  nor := 1";
         return expected;
     }
 
-    private Statement createProgram() {
+    private Statement createProgram(boolean valid) {
 
         // -- Outer If Statement --
         // Outer Condition
@@ -52,15 +60,14 @@ public class VerifierNorTest {
 
         // Outer Else
         VariableExpression nor3 = new VariableExpression("nor");
-        IntegerExpression zero4 = new IntegerExpression(0);
+        IntegerExpression zero4 = valid ? new IntegerExpression(0) : new IntegerExpression(1);
         Assignment outerElseBlock = new Assignment(nor3, zero4);
 
         Statement program = new If(outerCondition, innerIfStatement, outerElseBlock);
 
-        // Verify program serialization
-        program.accept(visitor);
-        String result = visitor.result;
-        String expected = expectedSerializedProgram();
+        program.accept(programSerializer);
+        String result = programSerializer.result;
+        String expected = expectedSerializedProgram(valid);
 
         assertEquals(expected, result);
 
@@ -69,12 +76,198 @@ public class VerifierNorTest {
 
     @BeforeEach
     public void setUp() {
-        visitor = new StatementSerializeVisitor();
-        this.program = createProgram();
+        programSerializer = new StatementSerializeVisitor();
+        conditionSerializer = new ConditionSerializeVisitor();
+        this.validProgram = createProgram(true);
+        this.invalidProgram = createProgram(false);
+        verifier = new Verifier();
     }
 
     @Test
-    void NorValid1() {
-        System.out.println("TO BE IMPLEMENTED");
+    void NorValidNoPrecondition() {
+        // Postcondition: a == 0 && b == 0 ==> nor == 1
+        Condition postcondition1 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(0));
+        Condition postcondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(0));
+        Condition postcondition3 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(1));
+        Condition implication1 = new BinaryConnective(ConnectiveType.AND, postcondition1, postcondition2);
+        Condition implication2 = new BinaryConnective(ConnectiveType.IMPLIES, implication1, postcondition3);
+
+        // Postcondition: (a == 1 || b == 1) ==> nor == 0
+        Condition postcondition4 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(0));
+        Condition postcondition5 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(1));
+        Condition postcondition6 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(1));
+        Condition orCondition = new BinaryConnective(ConnectiveType.OR, postcondition5, postcondition6);
+        Condition implication3 = new BinaryConnective(ConnectiveType.IMPLIES, orCondition, postcondition4);
+
+        Condition combineConditions = new BinaryConnective(ConnectiveType.AND, implication2, implication3);
+
+        combineConditions.accept(conditionSerializer);
+        String expectedSerializedPost = "( ( ( a == 0 ) AND ( b == 0 ) ) ==> ( nor == 1 ) ) AND ( ( ( a == 1 ) OR ( b == 1 ) ) ==> ( nor == 0 ) )";
+
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertTrue(verifier.verify(validProgram, combineConditions));
+    }
+
+    @Test
+    void NorValidPrecondition() {
+        // Preconditions: a == 1 || a == 0
+        Condition precondition1 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(1));
+        Condition precondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(0));
+        Condition orConditionA = new BinaryConnective(ConnectiveType.OR, precondition1, precondition2);
+
+        // Preconditions: b == 1 || b == 0
+        Condition precondition3 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(1));
+        Condition precondition4 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(0));
+        Condition orConditionB = new BinaryConnective(ConnectiveType.OR, precondition3, precondition4);
+
+        Condition preconditions = new BinaryConnective(ConnectiveType.AND, orConditionA, orConditionB);
+
+        // Postcondition: a == 0 && b == 0 ==> nor == 1
+        Condition postcondition1 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(0));
+        Condition postcondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(0));
+        Condition postcondition3 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(1));
+        Condition implication1 = new BinaryConnective(ConnectiveType.AND, postcondition1, postcondition2);
+        Condition implication2 = new BinaryConnective(ConnectiveType.IMPLIES, implication1, postcondition3);
+
+        // Postcondition: (a == 1 || b == 1) ==> nor == 0
+        Condition postcondition4 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(0));
+        Condition postcondition5 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(1));
+        Condition postcondition6 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(1));
+        Condition orCondition = new BinaryConnective(ConnectiveType.OR, postcondition5, postcondition6);
+        Condition implication3 = new BinaryConnective(ConnectiveType.IMPLIES, orCondition, postcondition4);
+
+        Condition postconditions = new BinaryConnective(ConnectiveType.AND, implication2, implication3);
+
+        assertTrue(verifier.verify(validProgram, preconditions, postconditions));
+    }
+
+    @Test
+    void NorInvalidPost() {
+        // Postcondition: a == 0 && b == 0 ==> nor == 0 (Incorrect postcondition)
+        Condition postcondition1 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(0));
+        Condition postcondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(0));
+        Condition postcondition3 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(0)); // Incorrect postcondition
+        Condition implication1 = new BinaryConnective(ConnectiveType.AND, postcondition1, postcondition2);
+        Condition implication2 = new BinaryConnective(ConnectiveType.IMPLIES, implication1, postcondition3);
+
+        // Postcondition: (a == 1 || b == 1) ==> nor == 0
+        Condition postcondition4 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(0));
+        Condition postcondition5 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(1));
+        Condition postcondition6 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(1));
+        Condition orCondition = new BinaryConnective(ConnectiveType.OR, postcondition5, postcondition6);
+        Condition implication3 = new BinaryConnective(ConnectiveType.IMPLIES, orCondition, postcondition4);
+
+        Condition postconditions = new BinaryConnective(ConnectiveType.AND, implication2, implication3);
+
+        postconditions.accept(conditionSerializer);
+        String expectedSerializedPost = "( ( ( a == 0 ) AND ( b == 0 ) ) ==> ( nor == 0 ) ) AND ( ( ( a == 1 ) OR ( b == 1 ) ) ==> ( nor == 0 ) )";
+
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertFalse(verifier.verify(invalidProgram, postconditions));
+
+        /* Test counterexamples */
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        // Map<String, Integer> map = verifier.getCounterexampleMap();
+    }
+
+    @Test
+    void NorIncorrect() {
+        // Precondition: a == 1 || a == 0, b == 1 || b == 0
+        Condition precondition1 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(1));
+        Condition precondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(1));
+        Condition preconditions = new BinaryConnective(ConnectiveType.OR, precondition1, precondition2);
+
+        // Postcondition: a == 0 && b == 0 ==> nor == 1
+        Condition postcondition1 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(0));
+        Condition postcondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(0));
+        Condition postcondition3 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(1)); // Correct postcondition
+        Condition implication1 = new BinaryConnective(ConnectiveType.AND, postcondition1, postcondition2);
+        Condition implication2 = new BinaryConnective(ConnectiveType.IMPLIES, implication1, postcondition3);
+
+        // Postcondition: (a == 1 || b == 1) ==> nor == 0
+        Condition postcondition4 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("nor"),
+                new IntegerExpression(0));
+        Condition postcondition5 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(1));
+        Condition postcondition6 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(1));
+        Condition orCondition = new BinaryConnective(ConnectiveType.OR, postcondition5, postcondition6);
+        Condition implication3 = new BinaryConnective(ConnectiveType.IMPLIES, orCondition, postcondition4);
+
+        Condition postconditions = new BinaryConnective(ConnectiveType.AND, implication2, implication3);
+
+        postconditions.accept(conditionSerializer);
+        String expectedSerializedPost = "( ( ( a == 0 ) AND ( b == 0 ) ) ==> ( nor == 1 ) ) AND ( ( ( a == 1 ) OR ( b == 1 ) ) ==> ( nor == 0 ) )";
+
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertFalse(verifier.verify(invalidProgram, preconditions, postconditions));
+
+        /* Test counterexamples */
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        // Map<String, Integer> map = verifier.getCounterexampleMap();
     }
 }
