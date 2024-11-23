@@ -3,27 +3,35 @@ package verifier.trajectory;
 import imp.expression.*;
 import imp.statement.*;
 import imp.condition.*;
+import imp.visitor.serialize.ConditionSerializeVisitor;
 import imp.visitor.serialize.StatementSerializeVisitor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import verifier.Verifier;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VerifierTrajectoryTest {
-    private StatementSerializeVisitor visitor;
-    private Statement program;
+    private StatementSerializeVisitor programSerializer;
+    private ConditionSerializeVisitor conditionSerializer;
+    private Statement validProgram;
+    private Statement invalidProgram;
+    private Verifier verifier;
 
-    private String expectedSerializedProgram() {
+    private String expectedSerializedProgram(boolean valid) {
         String expected = "if a == b\n";
         expected += "then\n";
-        expected += "  trajectory := b\n";
+        expected += valid ? "  trajectory := b\n" : "  trajectory := b + 1\n";
         expected += "else\n";
         expected += "    changeInTrajectory := ( a * -1 ) + b\n";
         expected += "    trajectory := b + changeInTrajectory";
         return expected;
     }
 
-    private Statement createProgram() {
+    private Statement createProgram(boolean valid) {
 
         // Condition
         VariableExpression a1 = new VariableExpression("a");
@@ -32,8 +40,10 @@ public class VerifierTrajectoryTest {
 
         // Then Block
         VariableExpression trajectory1 = new VariableExpression("trajectory");
-        VariableExpression b2 = new VariableExpression("b");
-        Assignment thenBlock = new Assignment(trajectory1, b2);
+        Expression b2 = new VariableExpression("b");
+        Expression oneS = new IntegerExpression(1);
+        Expression bPlusOne = new BinaryExpression(ExpressionType.ADD, b2, oneS);
+        Assignment thenBlock = valid ? new Assignment(trajectory1, b2) : new Assignment(trajectory1, bPlusOne);
 
         // Else Block
         // ElseBlockStatement1
@@ -58,10 +68,10 @@ public class VerifierTrajectoryTest {
         // If Statement
         Statement program = new If(condition, thenBlock, elseBlock);
 
-        // Verify program serialization
-        program.accept(visitor);
-        String result = visitor.result;
-        String expected = expectedSerializedProgram();
+        // Verify Program Serialization
+        program.accept(programSerializer);
+        String result = programSerializer.result;
+        String expected = expectedSerializedProgram(valid);
 
         assertEquals(expected, result);
 
@@ -70,12 +80,197 @@ public class VerifierTrajectoryTest {
 
     @BeforeEach
     public void setUp() {
-        visitor = new StatementSerializeVisitor();
-        this.program = createProgram();
+        programSerializer = new StatementSerializeVisitor();
+        conditionSerializer = new ConditionSerializeVisitor();
+        this.validProgram = createProgram(true);
+        this.invalidProgram = createProgram(false);
+        verifier = new Verifier();
     }
 
     @Test
-    void TrajectoryValid1() {
-        System.out.println("TO BE IMPLEMENTED");
+    void TrajectoryValidNoPrecondition() {
+        // Postcondition: !(a == b) ==> trajectory == b + (b + (-1 * a))
+        Condition innerc1Left = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition postcondition1Left = new UnaryConnective(ConnectiveType.NOT, innerc1Left);
+
+        Expression negationTerm = new BinaryExpression(ExpressionType.MUL,
+                new IntegerExpression(-1),
+                new VariableExpression("a"));
+        Expression innerSum = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                negationTerm);
+        Expression outerSum = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                innerSum);
+        Condition postcondition1Right = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("trajectory"),
+                outerSum);
+        Condition postcondition = new BinaryConnective(ConnectiveType.IMPLIES, postcondition1Left, postcondition1Right);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPost = "( NOT( a == b ) ) ==> ( trajectory == b + ( b + ( -1 * a ) ) )";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertTrue(verifier.verify(validProgram, postcondition));
+    }
+
+    @Test
+    void TrajectoryValidWithPrecondition() {
+        // Precondition: ensures a == b ==> trajectory == a
+        Condition aEqualB = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition trajEqualA = new BinaryCondition(ConditionType.EQUAL, new VariableExpression("trajectory"),
+                new VariableExpression("a"));
+        Condition precondition = new BinaryConnective(ConnectiveType.IMPLIES, aEqualB, trajEqualA);
+
+        // Postcondition: !(a == b) ==> trajectory == b + (b + (-1 * a))
+        Condition innerc1Left = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition postcondition1Left = new UnaryConnective(ConnectiveType.NOT, innerc1Left);
+
+        Expression negationTerm = new BinaryExpression(ExpressionType.MUL,
+                new IntegerExpression(-1),
+                new VariableExpression("a"));
+        Expression innerSum = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                negationTerm);
+        Expression outerSum = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                innerSum);
+        Condition postcondition1Right = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("trajectory"),
+                outerSum);
+        Condition postcondition = new BinaryConnective(ConnectiveType.IMPLIES, postcondition1Left, postcondition1Right);
+
+        precondition.accept(conditionSerializer);
+        String expectedSerializedPre = "( a == b ) ==> ( trajectory == a )";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPost = "( NOT( a == b ) ) ==> ( trajectory == b + ( b + ( -1 * a ) ) )";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertTrue(verifier.verify(validProgram, precondition, postcondition));
+    }
+
+    @Test
+    void TrajectoryInvalidNoPrecondition() {
+        // Postcondition: !(a == b) ==> trajectory == b + (-1 * a)
+        Condition innerc1Left = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition postcondition1Left = new UnaryConnective(ConnectiveType.NOT, innerc1Left);
+
+        Expression negationTerm = new BinaryExpression(ExpressionType.MUL,
+                new IntegerExpression(-1),
+                new VariableExpression("a"));
+        Expression postResult = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                negationTerm);
+        Condition postcondition1Right = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("trajectory"),
+                postResult);
+        Condition postcondition = new BinaryConnective(ConnectiveType.IMPLIES, postcondition1Left, postcondition1Right);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPost = "( NOT( a == b ) ) ==> ( trajectory == b + ( -1 * a ) )";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertFalse(verifier.verify(validProgram, postcondition));
+
+        /* Test counterexamples */
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        // Map<String, Integer> map = verifier.getCounterexampleMap();
+    }
+
+    @Test
+    void TrajectoryInvalidWithPrecondition() {
+        // Precondition: a == b ==> trajectory == a
+        Condition aEqualB = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition trajEqualA = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("trajectory"),
+                new VariableExpression("a"));
+        Condition precondition = new BinaryConnective(ConnectiveType.IMPLIES, aEqualB, trajEqualA);
+
+        // Postcondition: !(a == b) ==> trajectory == a
+        Condition aEqualB2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition postcondition1Left = new UnaryConnective(ConnectiveType.NOT, aEqualB2);
+        Condition postcondition1Right = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("trajectory"),
+                new VariableExpression("a"));
+        Condition postcondition = new BinaryConnective(ConnectiveType.IMPLIES, postcondition1Left, postcondition1Right);
+
+        precondition.accept(conditionSerializer);
+        String expectedSerializedPre = "( a == b ) ==> ( trajectory == a )";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPost = "( NOT( a == b ) ) ==> ( trajectory == a )";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertFalse(verifier.verify(validProgram, precondition, postcondition));
+
+        /* Test counterexamples */
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        // Map<String, Integer> map = verifier.getCounterexampleMap();
+    }
+
+    @Test
+    void InvalidTrajectoryValidSpec() {
+        // Precondition: ensures a == b ==> trajectory == a
+        Condition aEqualB = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition trajEqualA = new BinaryCondition(ConditionType.EQUAL, new VariableExpression("trajectory"),
+                new VariableExpression("a"));
+        Condition precondition = new BinaryConnective(ConnectiveType.IMPLIES, aEqualB, trajEqualA);
+
+        // Postcondition: !(a == b) ==> trajectory == b + (b + (-1 * a))
+        Condition innerc1Left = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new VariableExpression("b"));
+        Condition postcondition1Left = new UnaryConnective(ConnectiveType.NOT, innerc1Left);
+
+        Expression negationTerm = new BinaryExpression(ExpressionType.MUL,
+                new IntegerExpression(-1),
+                new VariableExpression("a"));
+        Expression innerSum = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                negationTerm);
+        Expression outerSum = new BinaryExpression(ExpressionType.ADD,
+                new VariableExpression("b"),
+                innerSum);
+        Condition postcondition1Right = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("trajectory"),
+                outerSum);
+        Condition postcondition = new BinaryConnective(ConnectiveType.IMPLIES, postcondition1Left, postcondition1Right);
+
+        precondition.accept(conditionSerializer);
+        String expectedSerializedPre = "( a == b ) ==> ( trajectory == a )";
+        assertEquals(expectedSerializedPre, conditionSerializer.result);
+
+        postcondition.accept(conditionSerializer);
+        String expectedSerializedPost = "( NOT( a == b ) ) ==> ( trajectory == b + ( b + ( -1 * a ) ) )";
+        assertEquals(expectedSerializedPost, conditionSerializer.result);
+
+        assertFalse(verifier.verify(invalidProgram, precondition, postcondition));
+
+        /* Test counterexamples */
+        String counterexampleString = verifier.getCounterexampleString();
+        assertNotEquals("", counterexampleString);
+
+        // Map<String, Integer> map = verifier.getCounterexampleMap();
     }
 }
