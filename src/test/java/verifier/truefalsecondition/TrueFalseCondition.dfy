@@ -50,7 +50,7 @@ method TrueFalseConditionInvalidPostcondition(x: int) returns (y: int)
 }
 
 method TrueFalseConditionInvalidWithPrecondition(x: int) returns (y: int)
-    requires x <= 0
+    requires x == 0
     ensures y == x // Postcondition makes it so that the program is never valid.
 {
     if (true) {

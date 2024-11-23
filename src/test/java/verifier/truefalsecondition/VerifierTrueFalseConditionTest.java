@@ -114,13 +114,14 @@ public class VerifierTrueFalseConditionTest {
         // Precondition: x <= 0
         // Postcondition: y == x + 1
 
-        VariableExpression x = new VariableExpression("x");
+        VariableExpression x1 = new VariableExpression("x");
+        VariableExpression x2 = new VariableExpression("x");
         VariableExpression y = new VariableExpression("y");
         IntegerExpression zero = new IntegerExpression(0);
         IntegerExpression one = new IntegerExpression(1);
 
-        BinaryCondition precondition = new BinaryCondition(ConditionType.LE, x, zero);
-        BinaryExpression xPlusOne = new BinaryExpression(ExpressionType.ADD, x, one);
+        BinaryCondition precondition = new BinaryCondition(ConditionType.LE, x1, zero);
+        BinaryExpression xPlusOne = new BinaryExpression(ExpressionType.ADD, x2, one);
         BinaryCondition postcondition = new BinaryCondition(ConditionType.EQUAL, y, xPlusOne);
 
         precondition.accept(conditionSerializer);
@@ -150,36 +151,27 @@ public class VerifierTrueFalseConditionTest {
         assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         assertFalse(verifier.verify(validProgram, postcondition));
-
-        /* Test counterexamples */
-        // String counterexampleString = verifier.getCounterexampleString();
-        // System.out.println("Counterexample String: " + counterexampleString);
-        // assertNotEquals("", counterexampleString);
-
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
-        // System.out.println("Counterexample Map: " + map);
-        // assertTrue(map.containsKey("x"));
-        // assertTrue(map.containsKey("y"));
     }
 
     @Test
     void TrueFalseConditionInvalidWithPrecondition() {
-        // Precondition: x <= 0
+        // Precondition: x == 0
         // Postcondition: y == x (Invalid)
 
-        VariableExpression x = new VariableExpression("x");
+        VariableExpression x1 = new VariableExpression("x");
+        VariableExpression x2 = new VariableExpression("x");
         VariableExpression y = new VariableExpression("y");
         IntegerExpression zero = new IntegerExpression(0);
 
-        BinaryCondition precondition = new BinaryCondition(ConditionType.LE, x, zero);
-        BinaryCondition postcondition = new BinaryCondition(ConditionType.EQUAL, y, x);
+        BinaryCondition precondition = new BinaryCondition(ConditionType.EQUAL, x1, zero);
+        BinaryCondition postcondition = new BinaryCondition(ConditionType.EQUAL, y, x2);
 
         precondition.accept(conditionSerializer);
         String serializedPre = conditionSerializer.result;
         postcondition.accept(conditionSerializer);
         String serializedPost = conditionSerializer.result;
 
-        String expectedSerializedPre = "x <= 0";
+        String expectedSerializedPre = "x == 0";
         String expectedSerializedPost = "y == x";
 
         assertEquals(expectedSerializedPre, serializedPre);
@@ -193,7 +185,6 @@ public class VerifierTrueFalseConditionTest {
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
         assertTrue(map.containsKey("x"));
-        // assertTrue(map.containsKey("y"));
     }
 
     @Test
@@ -213,13 +204,6 @@ public class VerifierTrueFalseConditionTest {
 
         boolean isValid = verifier.verify(invalidProgram, postcondition);
         assertFalse(isValid);
-
-        /* Test counterexamples */
-        // String counterexampleString = verifier.getCounterexampleString();
-        // assertNotEquals("", counterexampleString);
-
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
-        // assertTrue(map.containsKey("x"));
     }
 
 }
