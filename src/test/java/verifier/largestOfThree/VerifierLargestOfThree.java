@@ -174,6 +174,7 @@ public class VerifierLargestOfThree {
         assertNotEquals("", counterexampleString);
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
+        System.out.println(verifier.getCounterexampleString());
         assertNotEquals(map.get("x"), map.get("largest")); // post condition not met
     }
 
@@ -198,6 +199,7 @@ public class VerifierLargestOfThree {
         assertNotEquals("", counterexampleString);
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
+        System.out.println(verifier.getCounterexampleString());
         assertNotEquals(map.get("y"), map.get("largest")); // post condition not met
     }
 
@@ -227,6 +229,8 @@ public class VerifierLargestOfThree {
         assertNotEquals("", counterexampleString);
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
+        System.out.println(verifier.getCounterexampleString());
+        assertTrue(map.get("z") > map.get("x"));
         assertTrue(map.get("z") != map.get("largest")); // z is never largest.
     }
 }
