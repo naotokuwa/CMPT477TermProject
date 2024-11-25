@@ -8,6 +8,7 @@
 
 // No Preconditions 
 method TrajectoryValidNoPrecondition(a: int, b: int) returns (trajectory: int)
+	ensures a == b ==> trajectory == a
 	ensures !(a == b) ==> trajectory == b + (b + (-1 * a))
 {
 	if ( a == b ) {
@@ -20,6 +21,7 @@ method TrajectoryValidNoPrecondition(a: int, b: int) returns (trajectory: int)
 
 // With Preconditions 
 method TrajectoryValidWithPrecondition(a: int, b: int) returns (trajectory: int)
+    requires a == b
 	ensures a == b ==> trajectory == a
 	ensures !(a == b) ==> trajectory == b + (b + (-1 * a))
 {
@@ -33,20 +35,8 @@ method TrajectoryValidWithPrecondition(a: int, b: int) returns (trajectory: int)
 
 // Invalid No Preconditions 
 method TrajectoryInvalidNoPrecondition(a: int, b: int) returns (trajectory: int)
-	ensures !(a == b) ==> trajectory == b + (-1 * a)
-{
-	if ( a == b ) {
-		trajectory := b;
-	} else {
-		var changeInTrajectory: int := ( a * -1 ) + b;
-		trajectory := b + changeInTrajectory;
-	}
-}
-
-// Invalid With Preconditions 
-method TrajectoryInvalidWithPrecondition(a: int, b: int) returns (trajectory: int)
 	ensures a == b ==> trajectory == a
-	ensures !(a == b) ==> trajectory == a
+	ensures !(a == b) ==> trajectory == b + (-1 * a) // Invalid Postcondition
 {
 	if ( a == b ) {
 		trajectory := b;
