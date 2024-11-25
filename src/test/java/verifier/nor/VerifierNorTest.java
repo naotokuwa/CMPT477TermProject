@@ -171,6 +171,17 @@ public class VerifierNorTest {
 
         Condition postconditions = new BinaryConnective(ConnectiveType.AND, implication2, implication3);
 
+        // Check Pre and Post were properly made.
+        preconditions.accept(conditionSerializer);
+        String serializedPre = conditionSerializer.result;
+        String expectedSerializedPre = "( ( a == 1 ) OR ( a == 0 ) ) AND ( ( b == 1 ) OR ( b == 0 ) )";
+        assertEquals(expectedSerializedPre, serializedPre);
+
+        postconditions.accept(conditionSerializer);
+        String serializedPost = conditionSerializer.result;
+        String expectedSerializedPost = "( ( ( a == 0 ) AND ( b == 0 ) ) ==> ( nor == 1 ) ) AND ( ( ( a == 1 ) OR ( b == 1 ) ) ==> ( nor == 0 ) )";
+        assertEquals(expectedSerializedPost, serializedPost);
+
         assertTrue(verifier.verify(validProgram, preconditions, postconditions));
     }
 
@@ -206,7 +217,6 @@ public class VerifierNorTest {
 
         postconditions.accept(conditionSerializer);
         String expectedSerializedPost = "( ( ( a == 0 ) AND ( b == 0 ) ) ==> ( nor == 0 ) ) AND ( ( ( a == 1 ) OR ( b == 1 ) ) ==> ( nor == 0 ) )";
-
         assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         assertFalse(verifier.verify(invalidProgram, postconditions));
@@ -215,7 +225,9 @@ public class VerifierNorTest {
         String counterexampleString = verifier.getCounterexampleString();
         assertNotEquals("", counterexampleString);
 
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        System.out.println(map);
+        assertTrue(map.get("a") == 0 && map.get("b") == 0); // nor should return 0, but returns 1
     }
 
     @Test
@@ -225,9 +237,19 @@ public class VerifierNorTest {
                 new VariableExpression("a"),
                 new IntegerExpression(1));
         Condition precondition2 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("a"),
+                new IntegerExpression(0));
+        Condition preconditions1 = new BinaryConnective(ConnectiveType.OR, precondition1, precondition2);
+
+        Condition precondition3 = new BinaryCondition(ConditionType.EQUAL,
                 new VariableExpression("b"),
                 new IntegerExpression(1));
-        Condition preconditions = new BinaryConnective(ConnectiveType.OR, precondition1, precondition2);
+        Condition precondition4 = new BinaryCondition(ConditionType.EQUAL,
+                new VariableExpression("b"),
+                new IntegerExpression(0));
+        Condition preconditions2 = new BinaryConnective(ConnectiveType.OR, precondition3, precondition4);
+
+        Condition preconditions = new BinaryConnective(ConnectiveType.AND, preconditions1, preconditions2);
 
         // Postcondition: a == 0 && b == 0 ==> nor == 1
         Condition postcondition1 = new BinaryCondition(ConditionType.EQUAL,
@@ -257,9 +279,14 @@ public class VerifierNorTest {
 
         Condition postconditions = new BinaryConnective(ConnectiveType.AND, implication2, implication3);
 
+        // Check Pre and Post were properly made.
+        preconditions.accept(conditionSerializer);
+        String serializedPre = conditionSerializer.result;
+        String expectedSerializedPre = "( ( a == 1 ) OR ( a == 0 ) ) AND ( ( b == 1 ) OR ( b == 0 ) )";
+        assertEquals(expectedSerializedPre, serializedPre);
+
         postconditions.accept(conditionSerializer);
         String expectedSerializedPost = "( ( ( a == 0 ) AND ( b == 0 ) ) ==> ( nor == 1 ) ) AND ( ( ( a == 1 ) OR ( b == 1 ) ) ==> ( nor == 0 ) )";
-
         assertEquals(expectedSerializedPost, conditionSerializer.result);
 
         assertFalse(verifier.verify(invalidProgram, preconditions, postconditions));
@@ -268,6 +295,8 @@ public class VerifierNorTest {
         String counterexampleString = verifier.getCounterexampleString();
         assertNotEquals("", counterexampleString);
 
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        System.out.println(map);
+        assertTrue(map.get("a") == 1 && map.get("b") == 0); // nor should return 0, but returns 1
     }
 }
