@@ -26,7 +26,7 @@ method LargestOfThreeValidNoPrecondition (x: int, y: int, z: int ) returns (larg
 // With PreConditions 
 method LargestOfThreeValidWithPre(x: int, y: int, z: int) returns (largest: int)
     requires x <= y && y <= z
-    ensures x <= largest && y <= largest && z <= largest
+    ensures x <= largest && y <= largest && z == largest
 {
     largest := x;
 

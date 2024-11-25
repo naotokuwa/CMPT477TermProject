@@ -83,14 +83,14 @@ public class VerifierLargestOfThree {
         Statement comp2 = new Composition(comp1, statement3IfStatement);
         Statement program = comp2;
 
-      // Verify Program Serialization
-      program.accept(programSerializer);
-      String result = programSerializer.result;
-      String expected = expectedSerializedProgram(valid);
+        // Verify Program Serialization
+        program.accept(programSerializer);
+        String result = programSerializer.result;
+        String expected = expectedSerializedProgram(valid);
 
-      assertEquals(expected, result);
+        assertEquals(expected, result);
 
-      return program;
+        return program;
     }
 
     @BeforeEach
@@ -128,10 +128,10 @@ public class VerifierLargestOfThree {
         
         Condition combinedPrecondition = new BinaryConnective(ConnectiveType.AND, precondition1, precondition2);
     
-        // Postcondition: x <= largest && y <= largest && z <= largest
+        // Postcondition: x <= largest && y <= largest && z == largest
         Condition postcondition1 = new BinaryCondition(ConditionType.LE, new VariableExpression("x"), new VariableExpression("largest"));
         Condition postcondition2 = new BinaryCondition(ConditionType.LE, new VariableExpression("y"), new VariableExpression("largest"));
-        Condition postcondition3 = new BinaryCondition(ConditionType.LE, new VariableExpression("z"), new VariableExpression("largest"));
+        Condition postcondition3 = new BinaryCondition(ConditionType.EQUAL, new VariableExpression("z"), new VariableExpression("largest"));
     
         Condition combinedPostcondition1 = new BinaryConnective(ConnectiveType.AND, postcondition1, postcondition2);
         Condition combinedPostcondition = new BinaryConnective(ConnectiveType.AND, combinedPostcondition1, postcondition3);
@@ -142,7 +142,7 @@ public class VerifierLargestOfThree {
         assertEquals(expectedSerializedPre, conditionSerializer.result);
     
         combinedPostcondition.accept(conditionSerializer);
-        String expectedSerializedPost = "( ( x <= largest ) AND ( y <= largest ) ) AND ( z <= largest )";
+        String expectedSerializedPost = "( ( x <= largest ) AND ( y <= largest ) ) AND ( z == largest )";
         assertEquals(expectedSerializedPost, conditionSerializer.result);
     
         // Verify with precondition and postcondition
@@ -173,7 +173,8 @@ public class VerifierLargestOfThree {
         String counterexampleString = verifier.getCounterexampleString();
         assertNotEquals("", counterexampleString);
 
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertNotEquals(map.get("x"), map.get("largest")); // post condition not met
     }
 
     @Test
@@ -196,7 +197,8 @@ public class VerifierLargestOfThree {
         String counterexampleString = verifier.getCounterexampleString();
         assertNotEquals("", counterexampleString);
 
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertNotEquals(map.get("y"), map.get("largest")); // post condition not met
     }
 
     @Test
@@ -224,8 +226,7 @@ public class VerifierLargestOfThree {
         String counterexampleString = verifier.getCounterexampleString();
         assertNotEquals("", counterexampleString);
 
-        // Map<String, Integer> map = verifier.getCounterexampleMap();
+        Map<String, Integer> map = verifier.getCounterexampleMap();
+        assertTrue(map.get("z") != map.get("largest")); // z is never largest.
     }
-
-
 }
