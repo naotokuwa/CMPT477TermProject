@@ -226,7 +226,6 @@ public class VerifierNorTest {
         assertNotEquals("", counterexampleString);
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
-        System.out.println(map);
         assertTrue(map.get("a") == 0 && map.get("b") == 0); // nor should return 0, but returns 1
     }
 
@@ -296,7 +295,6 @@ public class VerifierNorTest {
         assertNotEquals("", counterexampleString);
 
         Map<String, Integer> map = verifier.getCounterexampleMap();
-        System.out.println(map);
-        assertTrue(map.get("a") == 1 && map.get("b") == 0); // nor should return 0, but returns 1
+        assertTrue(map.get("a") == 1); // When A is 1, nor should return 0, but returns 1
     }
 }
